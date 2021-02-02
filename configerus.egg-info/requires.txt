@@ -1,0 +1,5 @@
+appdirs
+pyyaml
+
+[testing]
+pytest

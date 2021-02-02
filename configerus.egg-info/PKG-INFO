@@ -1,0 +1,33 @@
+Metadata-Version: 2.1
+Name: configerus
+Version: 0.1
+Summary: Configuration manager
+Home-page: http://example.org
+Author: James Nesbitt
+Author-email: james.r.nesbitt@gmail.com
+License: MIT
+Project-URL: Source, https://github.com/Mirantis
+Description: # Configerus
+        
+        Dynamic and abstract configuration management
+        
+Keywords: test,unittest
+Platform: unix
+Platform: linux
+Platform: osx
+Classifier: Development Status :: 6 - Mature
+Classifier: Intended Audience :: Developers
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Operating System :: MacOS :: MacOS X
+Classifier: Operating System :: Microsoft :: Windows
+Classifier: Operating System :: POSIX
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3 :: Only
+Classifier: Programming Language :: Python :: 3.7
+Classifier: Programming Language :: Python :: 3.8
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Topic :: Software Development :: Libraries
+Classifier: Topic :: Software Development :: Testing
+Classifier: Topic :: Utilities
+Description-Content-Type: text/markdown
+Provides-Extra: testing
