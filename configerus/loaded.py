@@ -44,7 +44,7 @@ class Loaded:
         """
         self.data = data
 
-    def get(self, key: str, format: bool=True, exception_if_missing: bool=False):
+    def get(self, key: str, format: bool=True, exception_if_missing: bool=False, validator:str=""):
         """ get a key value from the active label
 
         Here you can use "." (dot) notation to indicated a path down the config
@@ -63,6 +63,9 @@ class Loaded:
            substitution?  If so then the str value is checked using regex for
            things that should be replaced with other config values.
            @see self.format_string()
+
+        validator (str) : string key passed to the validate() method which will
+            validate the retrieved data before returning it.
 
         Returns:
 
@@ -90,6 +93,9 @@ class Loaded:
 
         # try to format any string values
         value = self.format(value)
+
+        if validator:
+            self.parent.validate(value, validator)
 
         return value
 

@@ -5,14 +5,17 @@ import copy
 from enum import Enum, unique
 
 logger = logging.getLogger('configerus.plugin')
+# logger.setLevel(level=logging.DEBUG)
 
 @unique
 class Type(Enum):
     """ Enumerator to match plugin types to plugin labels """
-    CONFIGSOURCE  = "configerus.plugin.configsource"
+    CONFIGSOURCE = "configerus.plugin.configsource"
     """ A Config source handler """
-    FORMATTER   = "configerus.plugin.formatter"
+    FORMATTER    = "configerus.plugin.formatter"
     """ A string formatter plugin """
+    VALIDATOR    = "configerus.plugin.validator"
+    """ A data result validator plugin """
 
 class Factory():
     """ Python decorator class for configuerus Plugin factories
@@ -29,7 +32,7 @@ class Factory():
     """
 
     registry = {}
-    """ A list of all of the registered factory functions """
+    """ A static list of all of the registered factory functions """
 
     def __init__(self, type: Type, plugin_id: str):
         """ register the decoration """
@@ -98,6 +101,22 @@ class SourceFactory(Factory):
         super().__init__(CONFIGERUS_SOURCE_TYPE, plugin_id)
 
 
+CONFIGERUS_VALIDATOR_TYPE = Type.VALIDATOR
+""" Short cut to the validate plugin type enum """
+class ValidatorFactory(Factory):
+    """ Decoration class for registering a validate plugin
+
+    This decorator is just a shortcut to allow skipping identifying the plugin
+    type using the core factory decorator class.
+
+    All we do is extend the core Factory plugin and pass in the plugin type
+    for formatters.
+    """
+    def __init__(self, plugin_id: str):
+        """ register the decoration """
+        super().__init__(CONFIGERUS_VALIDATOR_TYPE, plugin_id)
+
+
 class PluginInstances:
     """ List of plugins wrapped in the PluginInstance struct so that it can be
         prioritized and managed.
@@ -160,6 +179,18 @@ class PluginInstances:
         if not plugin_id:
             raise KeyError("Could not create a plugin as an invalid plugin_id was given: '{}'".format(plugin_id))
 
+        if not type:
+            raise KeyError("Could not create a plugin as an invalid type was given: '{}'".format(plugin_id))
+
+        if not instance_id:
+            # generate some kind of unique instance_id key
+            base_instance_id = "{}_{}".format(type.value, plugin_id)
+            index = 1
+            instance_id = "{}_{}".format(base_instance_id, index)
+            while self.has_plugin(instance_id):
+                index = 1
+                instance_id = "{}_{}".format(base_instance_id, index)
+
         if self.has_plugin(instance_id, plugin_id):
             self.warn("Replacing '{}.{}' with new plugin instance".format(plugin_id, instance_id))
 
@@ -174,13 +205,20 @@ class PluginInstances:
         self.instances.append(instance)
         return plugin
 
+    def get_plugin(self, instance_id, type:Type=None, exception_if_missing: bool=True):
+        """ Retrieve a plugin from its instance_id, optionally of a specific type """
+        for plugin_instance in self.instances:
+            if plugin_instance.instance_id==instance_id and (type==None or type==plugin_instance.type):
+                return plugin_instance.plugin
+
+        if exception_if_missing:
+            raise KeyError("Could not find plugin {}".format(instance_id if type is None else "{}:{}".format(type.value, instance_id)))
+        return False
+
     def has_plugin(self, instance_id, type:Type=None):
         """ Discover if a plugin had been added with an instance_id, optionally
             of a specific type """
-        for plugin_instance in self.instances:
-            if plugin_instance.instance_id==instance_id and (type==None or type==plugin_instance.type):
-                return True
-        return False
+        return bool(self.get_plugin(instance_id, type, exception_if_missing=False))
 
     def get_ordered_plugins(self, type:Type=None):
         """ order plugin, optionally just one type, by their top down priority
@@ -197,7 +235,7 @@ class PluginInstances:
         return [instance.plugin for instance in sorted_instances]
 
 class PluginInstance:
-    """ a struct for plugin instances that also keeps metadata about the instance """
+    """ a struct for a plugin instance that also keeps metadata about the instance """
 
     def __init__(self, type:Type, instance_id:str, priority:int, plugin):
         self.type = type

@@ -121,7 +121,7 @@ class Config:
         """
         return self.plugins.add_plugin(Type.CONFIGSOURCE, plugin_id, instance_id, priority)
 
-    def load(self, label:str, force_reload:bool=False):
+    def load(self, label:str, force_reload:bool=False, validator:str=""):
         """ Load a config label
 
         This queries all sources for the label and merges the loaded config data
@@ -139,6 +139,9 @@ class Config:
         force_reload (bool) : if true, and data has been loaded before, this
             forces a fresh reload of data from the sources
 
+        validator (str) : string key passed to the validate() method which will
+            validate the retrieved data before returning it.
+
         Returns:
         --------
 
@@ -148,6 +151,9 @@ class Config:
         -------
 
         Some source plugins will throw Exceptions if they have internal problems
+
+        If you request a validation, and validation fails, then a Validation
+        error with be raised.
 
         """
         if force_reload or label not in self.loaded:
@@ -165,6 +171,9 @@ class Config:
                 raise KeyError("Config '{}' loaded data came out empty.  That means that no config source could find that label.  That is likely a problem".format(label))
 
             self.loaded[label] = Loaded(data=data, parent=self, instance_id=label)
+
+        if validator:
+            self.validate(self.loaded[label].data, validator)
 
         return self.loaded[label]
 
@@ -217,3 +226,60 @@ class Config:
         for formatter in self.plugins.get_ordered_plugins(Type.FORMATTER):
             data = formatter.format(data, default_label)
         return data
+
+
+    """ Validator plugin usage and management
+
+
+
+    """
+
+    def has_validator(self, instance_id:str):
+        """ Check if a formatter instance has already been added
+
+        You can use this in abstracts to detect if you've already added a plugin
+        """
+        return self.plugns.has_plugin(instance_id, Type.VALIDATOR)
+
+    def add_validator(self, plugin_id:str, instance_id:str='', priority:int=PLUGIN_DEFAULT_PRIORITY):
+        """ add a new config validator to the config object and return it
+
+        Parameters:
+        -----------
+
+        plugin_id (str) : id of the plugin as registered using the plugin
+            factory  decorater for a validator plugin.  This has to match a
+            plugin's registration  with the plugin factory as a part of the
+            Factory decoration
+
+        instance_id (str) : Optionally give a validator plugin instance a name,
+            which it might use for internal functionality.
+
+        priority (int) : source priority. Use this to set this source values as
+            higher or lower priority than others.
+
+        Returns:
+        --------
+
+        Returns the source plugin so that you can do any actions to the plugin that it
+        supports, and the code here doesn't need to get fancy with function arguments
+
+        """
+        return self.plugins.add_plugin(Type.VALIDATOR, plugin_id, instance_id, priority)
+
+    def validate(self, data, validate_target:str, exception_if_invalid:bool=True):
+        """ Format some data using the config object formatters
+
+        data (Any): primitive data that should be formatted. The data will be
+            passed to the formatter plugins in descending priority order.
+
+        validate_target : A config key which can be used
+
+        """
+
+        try:
+            for validator in self.plugins.get_ordered_plugins(Type.VALIDATOR):
+                validator.validate(validate_target, data)
+        except Exception as e:
+            if exception_if_invalid:
+                raise e

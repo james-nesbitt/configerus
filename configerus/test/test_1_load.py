@@ -1,7 +1,8 @@
 import unittest
 import logging
 
-logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger("basic_construct")
+logger.setLevel(level=logging.INFO)
 
 import configerus
 
@@ -15,7 +16,7 @@ class BasicConstruct(unittest.TestCase):
         """ make sure we can create a Configs object, without a single bootstrap """
         config = configerus.new_config(bootstraps=['dict'])
 
-    def test_construct_2_bootsraps(self):
+    def test_construct_3_bootsraps(self):
         """ Make sure we can create a Configs object, with default bootstraps """
         config = configerus.new_config()
 

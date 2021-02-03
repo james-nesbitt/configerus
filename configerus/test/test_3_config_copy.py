@@ -3,11 +3,10 @@ import logging
 
 logging.basicConfig()
 logger = logging.getLogger('config_copy')
+logger.setLevel(level=logging.INFO)
 
 import configerus
 from configerus.contrib.dict import PLUGIN_ID_CONFIGSOURCE_DICT
-
-""" TESTS """
 
 """ TESTS """
 
@@ -16,7 +15,7 @@ class ConfigBehaviour(unittest.TestCase):
     def test_copy_safety(self):
         """ Test that config copy allows overloads and doesn't modify the source """
 
-        logger.info("Building empty config object")
+        logger.debug("Building empty config object")
         config = configerus.new_config()
 
         config.add_source(PLUGIN_ID_CONFIGSOURCE_DICT, 'orig', 80).set_data({
@@ -46,10 +45,10 @@ class ConfigBehaviour(unittest.TestCase):
         config1_copy = copy1.load('copy')
         config2_copy = copy2.load('copy')
 
-        logger.info('LOADED: AFTER: orig: %s',config_copy_orig.data )
-        logger.info('LOADED: AFTER: 1   : %s',config1_copy.data )
-        logger.info('LOADED: AFTER: 2   : %s',config2_copy.data )
-        logger.info('LOADED: AFTER: late: %s',config_copy_late.data )
+        logger.debug('LOADED: AFTER: orig: %s',config_copy_orig.data )
+        logger.debug('LOADED: AFTER: 1   : %s',config1_copy.data )
+        logger.debug('LOADED: AFTER: 2   : %s',config2_copy.data )
+        logger.debug('LOADED: AFTER: late: %s',config_copy_late.data )
 
         # check original values
         assert config_copy_orig.get('one') == 'orig 1'

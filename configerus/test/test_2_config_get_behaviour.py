@@ -14,7 +14,7 @@ from configerus.contrib.files import PLUGIN_ID_CONFIGSOURCE_PATH
 from configerus.test import make_test_config, test_config_cleanup
 
 logger = logging.getLogger("test_config_behaviour")
-logger.setLevel(logging.DEBUG)
+logger.setLevel(logging.INFO)
 
 config_sources = [
     {
@@ -123,7 +123,13 @@ config_sources = [
                 "11": "{variables:does.not.exist?megadefault}",
                 "12": "{variables:three?default}",
                 "13": "{_source_:fifth}",
-                "14": "{12}"
+                "14": "{12}",
+                "15": {
+                    "1": "{12}",
+                    "2": {
+                        "1": "{12}"
+                    }
+                }
             },
             "variables": {
                 "three": "eight three"
@@ -149,7 +155,7 @@ class ConfigBehaviour(unittest.TestCase):
         We also preload some of the config
         """
 
-        logger.info("Building empty config object")
+        logger.debug("Building empty config object")
         config = configerus.new_config()
         make_test_config(config, config_sources)
         cls.config = config
@@ -201,11 +207,15 @@ class ConfigBehaviour(unittest.TestCase):
         assert self.loaded_config.get("9") == "default"
         # test formatting default values
 
-        #assert loaded_config.get("10", strip_missing=True) == ""
-        # test strip missing values - NO LONGER AN OPTION
-
         assert self.loaded_config.get("11") == "megadefault"
-        # test a bunch of things tofether
+        # test a bunch of things together
 
         assert self.loaded_config.get("12") == self.loaded_variables.get("three")
         # test that default doesn't swap a positive search
+
+        assert self.loaded_config.get("14") == self.loaded_config.get("12")
+        # test neighbouring templating of a templated target
+
+        assert self.loaded_config.get("15")["1"] == self.loaded_config.get("12")
+        assert self.loaded_config.get("15")["2"]["1"] == self.loaded_config.get("12")
+        # test deep templating
