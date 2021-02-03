@@ -1,7 +1,6 @@
 import logging
 
-from .loaded import Loaded
-from .plugin import FormatFactory, SourceFactory, Type
+from .plugin import Factory, Type, PluginInstances
 from .shared import tree_merge
 from .loaded import Loaded
 
@@ -50,40 +49,29 @@ class Config:
     """
 
     def __init__(self):
-        self.sources = {PLUGIN_DEFAULT_PRIORITY: []}
-        """ Keep the collection of config sources in a Dict where the keys are
-            priority and the values are a list of plugins at that priority.
-        """
-        self.formatters = {PLUGIN_DEFAULT_PRIORITY: []}
-        """ Keep the collection of config formatters in a Dict where the keys are
-            priority and the values are a list of plugins at that priority.
-        """
+        self.plugins = PluginInstances(self)
+        """ keep a list of all of the plugins as PluginInstance wrappers
 
-        # save all loaded config when it is first loaded to save load costs on repeat calls
+            This mixes plugin types together but but it simplifies management
+            and storage of plugins """
+
         self.loaded = {}
-        """ Loaded map for config that has been loaded """
+        """ cache of config that has been loaded """
 
     def copy(self):
-        """ return a copy of this Config object """
-        logger.debug("Config is copying")
+        """ make a copy of this config object so that we can independently edit
+            the copy without affecting the original.
+        """
         copy = Config()
-        # we copy the dict of plugins, not to get copies of the plugins, just to
-        # get copies of the dicts so that modifying the copy does not affect the
-        # original.
-        copy.sources = self._copy_plugin_prioritymap(self.sources)
-        copy.formatters = self._copy_plugin_prioritymap(self.formatters)
-        # note that we don't copy the loaded config list, which means that any
-        # load() runs on the copy will reload from sources.
+        copy.plugins = self.plugins.copy(copy)
         return copy
 
-    def _copy_plugin_prioritymap(self, plugin_map):
-        """ safely copy a priority map of plugins without copying the plugins """
-        copy =  {}
-        for key in plugin_map:
-            copy[key] = []
-            for plugin in plugin_map[key]:
-                copy[key].append(plugin)
-        return copy
+    """ Pass through accessors
+
+    These methods just give access to some values used to govern config without
+    having to import the module and directly access constants.
+
+    """
 
     def paths_label(self):
         """ retrieve the special config label which is a list of paths """
@@ -93,16 +81,18 @@ class Config:
         """ Return the default priority for relative priority setting """
         return PLUGIN_DEFAULT_PRIORITY
 
+    """ Source plugins
+
+    All methods related to managing and using source plugins.
+
+    Some methods are short wrappers on the plugin abstractions, but that allows
+    consumers to not have to import the .plugin.Type enums
+
+    """
+
     def has_source(self, instance_id:str):
-        """ Check if a source instance has already been added
-
-        You can use this in abstracts to detect if you've already added a plugin
-
-        """
-        for priority in self.sources.keys():
-            if instance_id in self.sources[priority]:
-                return True
-        return False;
+        """ Check if a source instance has already been added """
+        return self.plugns.has_plugin(instance_id, Type.CONFIGSOURCE)
 
     def add_source(self, plugin_id:str, instance_id:str='', priority:int=PLUGIN_DEFAULT_PRIORITY):
         """ add a new config source to the config object and return it
@@ -129,23 +119,7 @@ class Config:
         supports, and the code here doesn't need to get fancy with function arguments
 
         """
-        if not plugin_id:
-            raise KeyError("Could not create a config source as an invalid plugin_id was given: '{}'".format(plugin_id))
-
-        try:
-            source_fac = SourceFactory(plugin_id)
-            source = source_fac.create(self, instance_id)
-
-        except NotImplementedError as e:
-            raise NotImplementedError("Could not create config source '{}' as that plugin_id could not be found.".format(plugin_id)) from e
-        # except Exception as e:
-        #     raise Exception("Could not create config source '{}' as the plugin factory produced an exception".format(plugin_id)) from e
-
-
-        if not priority in self.sources:
-            self.sources[priority] = []
-        self.sources[priority].append(source)
-        return source
+        return self.plugins.add_plugin(Type.CONFIGSOURCE, plugin_id, instance_id, priority)
 
     def load(self, label:str, force_reload:bool=False):
         """ Load a config label
@@ -177,29 +151,35 @@ class Config:
 
         """
         if force_reload or label not in self.loaded:
-            data = self._get_config_data(label)
+            """ load data from all of the sources for a label """
+            logger.debug("Loading Config '%s' from all sources", label)
+
+            data = {}
+            # merge in data from the higher priorty into the lower priority
+            for source in self.plugins.get_ordered_plugins(Type.CONFIGSOURCE):
+                source_data = source.load(label)
+                if source_data:
+                    data = tree_merge(data, source_data)
+
+            if not data:
+                raise KeyError("Config '{}' loaded data came out empty.  That means that no config source could find that label.  That is likely a problem".format(label))
+
             self.loaded[label] = Loaded(data=data, parent=self, instance_id=label)
 
         return self.loaded[label]
 
-    def _get_ordered_sources(self):
-        """ retrieve a flat List of config sources ordered high to low by priority """
-        ordered = []
-        """ Keep the uber list of sorted sources """
-        for priority in sorted(self.sources.keys()):
-            ordered += self.sources[priority]
-        ordered.reverse()
-        return ordered
+    """ Formatter plugin usage and management
+
+
+
+    """
 
     def has_formatter(self, instance_id:str):
         """ Check if a formatter instance has already been added
 
         You can use this in abstracts to detect if you've already added a plugin
         """
-        for priority in self.sources.keys():
-            if instance_id in self.sources[priority]:
-                return True
-        return False;
+        return self.plugns.has_plugin(instance_id, Type.FORMATTER)
 
     def add_formatter(self, plugin_id:str, instance_id:str='', priority:int=PLUGIN_DEFAULT_PRIORITY):
         """ add a new config formatter to the config object and return it
@@ -225,23 +205,7 @@ class Config:
         supports, and the code here doesn't need to get fancy with function arguments
 
         """
-        if not plugin_id:
-            raise KeyError("Could not create a formatter source as an invalid plugin_id was given: '{}'".format(plugin_id))
-
-        try:
-            format_fac = FormatFactory(plugin_id)
-            formatter = format_fac.create(self, instance_id)
-
-        except NotImplementedError as e:
-            raise NotImplementedError("Could not create config formatter '{}' as that plugin_id could not be found.".format(plugin_id)) from e
-        # except Exception as e:
-        #     raise Exception("Could not create config formatter '{}' as the plugin factory produced an exception".format(plugin_id)) from e
-
-
-        if not priority in self.formatters:
-            self.formatters[priority] = []
-        self.formatters[priority].append(formatter)
-        return formatter
+        return self.plugins.add_plugin(Type.FORMATTER, plugin_id, instance_id, priority)
 
     def format(self, data, default_label:str):
         """ Format some data using the config object formatters
@@ -250,48 +214,6 @@ class Config:
             passed to the formatter plugins in descending priority order.
 
         """
-        for formatter in self._get_ordered_formatters():
+        for formatter in self.plugins.get_ordered_plugins(Type.FORMATTER):
             data = formatter.format(data, default_label)
         return data
-
-    def _get_ordered_formatters(self):
-        """ retrieve a flat List of config sources ordered high to low by priority """
-        ordered = []
-        """ Keep the uber list of sorted sources """
-        for priority in sorted(self.formatters.keys()):
-            ordered += self.formatters[priority]
-        ordered.reverse()
-        return ordered
-
-    def reload_configs(self):
-        """ Get new data for all loaded configs
-
-        In case it isn't clear, this is expensive, but might be needed if you
-        know that config has changed in the background.
-
-        """
-        self.loaded = {}
-
-    def _get_config_data(self, label: str):
-        """ load data from all of the sources for a label """
-        logger.debug("Loading Config '%s' from all sources", label)
-
-        data = {}
-        # merge in data from the higher priorty into the lower priority
-        for source in self._get_ordered_sources():
-            source_data = source.load(label)
-            data = tree_merge(data, source_data)
-
-        if not data:
-            raise KeyError("Config '{}' loaded data came out empty.  That means that no config source could find that label.  That is likely a problem".format(label))
-
-        return data
-
-    def _get_ordered_sources(self):
-        """ retrieve a flat List of config sources ordered high to low by priority """
-        ordered = []
-        """ Keep the uber list of sorted sources """
-        for priority in sorted(self.sources.keys()):
-            ordered += self.sources[priority]
-        ordered.reverse()
-        return ordered

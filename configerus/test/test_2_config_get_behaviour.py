@@ -8,7 +8,6 @@ import logging
 import unittest
 
 import configerus
-from configerus.config import Config
 from configerus.contrib.dict import PLUGIN_ID_CONFIGSOURCE_DICT
 from configerus.contrib.files import PLUGIN_ID_CONFIGSOURCE_PATH
 

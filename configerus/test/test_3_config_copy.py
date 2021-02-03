@@ -26,7 +26,6 @@ class ConfigBehaviour(unittest.TestCase):
         })
 
         config_copy_orig = config.load('copy')
-        logger.info('LOADED: BEFORE: orig: %s',config_copy_orig.data )
 
         copy1 = config.copy()
         copy1.add_source(PLUGIN_ID_CONFIGSOURCE_DICT, 'copy1', 80).set_data({
