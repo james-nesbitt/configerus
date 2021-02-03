@@ -6,15 +6,13 @@ logger = logging.getLogger('configerus')
 from .config import Config
 from .bootstrap import bootstrap
 
-CONFIGERUS_NEWCONFIG_BOOSTRAP_DEFAULT = [
+CONFIGERUS_BOOSTRAP_DEFAULT = [
     'deep',
-    'get',
-    'dict',
-    'files'
+    'get'
 ]
 """ Default list of modules to bootstrap for a new config object """
 
-def new_config(bootstraps:List[str]=CONFIGERUS_NEWCONFIG_BOOSTRAP_DEFAULT):
+def new_config(bootstraps:List[str]=CONFIGERUS_BOOSTRAP_DEFAULT):
     """ Get a new Config object
 
     bootstraps (List[str]) : list of modules to bootstrap for this config object

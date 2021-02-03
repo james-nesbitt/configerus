@@ -1,3 +1,12 @@
+"""
+
+Test config validation
+
+Here we run some simple config validation on both load() and get() operations
+using the configerus.contric.jsonscheme validator plugin.
+
+"""
+
 import unittest
 import logging
 
@@ -12,7 +21,7 @@ from configerus.contrib.jsonschema import PLUGIN_ID_VALIDATE_JSONSCHEMA
 """ TESTS """
 
 class JsonSchemaValidate(unittest.TestCase):
-    """ Some simple validation testing """
+    """ Some simple validation testing usinf jsonschema """
 
     # examples from https://python-jsonschema.readthedocs.io/en/stable/
     valid_instance = {"name" : "Eggs", "price" : 34.99}
@@ -59,10 +68,9 @@ class JsonSchemaValidate(unittest.TestCase):
         config = self._simple_validate_config()
         try:
             load_config = config.load('invalid_load_test', validator='jsonschema:instance')
-
-            assert False, "Expected validation exception did not occur"
         except Exception:
-            pass
+            return
+        assert False, "Expected validation exception did not occur"
 
     def test_validate_jsonschema_get(self):
         """ just do a minimal jsonschema validation """
@@ -76,6 +84,6 @@ class JsonSchemaValidate(unittest.TestCase):
         try:
             # this should be invalid
             invalid_instance = test_config.get('1.invalid', validator='jsonschema:instance')
-            assert False, "Expected validation exception did not occur"
         except Exception:
-            pass
+            return
+        assert False, "Expected validation exception did not occur"

@@ -3,6 +3,14 @@ test_config
 
 Unit and functional testing for the config handler
 
+Here we test that config can load() and get() config and that those operations
+behave as expected.
+To get some good coverage we try to use both the DICT and PATH based config
+plugins.  To do that we define a list of config and use a configerus.test
+utility method which turns the PATH content into files in a temp directory
+before adding it to the config object.
+This makes this test harder to read, but it is a clean way to get better tests.
+
 """
 import logging
 import unittest

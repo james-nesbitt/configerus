@@ -1,3 +1,11 @@
+"""
+
+Test config construction
+
+Simple tests that ensure that the Config construction isn't broken
+
+"""
+
 import unittest
 import logging
 

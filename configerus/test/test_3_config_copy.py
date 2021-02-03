@@ -1,3 +1,12 @@
+"""
+
+Test config's copy()
+
+Here we test that the Config object is able to make copies of itself, and that
+changing those copies doesn't affect originals.
+
+"""
+
 import unittest
 import logging
 
