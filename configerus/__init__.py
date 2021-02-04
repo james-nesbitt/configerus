@@ -4,7 +4,6 @@ from typing import List
 logger = logging.getLogger('configerus')
 
 from .config import Config
-from .bootstrap import bootstrap
 
 CONFIGERUS_BOOSTRAP_DEFAULT = [
     'deep',
@@ -29,6 +28,6 @@ def new_config(bootstraps:List[str]=CONFIGERUS_BOOSTRAP_DEFAULT):
 
     for bootstrap_entrypoint_id in bootstraps:
         logger.debug('bootstrapping: {}'.format(bootstrap_entrypoint_id))
-        bootstrap(bootstrap_entrypoint_id, config)
+        config.bootstrap(bootstrap_entrypoint_id)
 
     return config
