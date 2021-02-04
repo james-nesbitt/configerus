@@ -117,32 +117,6 @@ config_sources = [
                 "6": "seventh 6 yaml"
             }
         }
-    },
-    {
-        "name": "eighth",
-        "priority": 80,
-        "type": PLUGIN_ID_CONFIGSOURCE_DICT,
-        "data": {
-            "config": {
-                "7": "{1}",
-                "8": "{variables:one}",
-                "9": "{does.not.exist?default}",
-                "10": "{does.not.exist}",
-                "11": "{variables:does.not.exist?megadefault}",
-                "12": "{variables:three?default}",
-                "13": "{_source_:fifth}",
-                "14": "{12}",
-                "15": {
-                    "1": "{12}",
-                    "2": {
-                        "1": "{12}"
-                    }
-                }
-            },
-            "variables": {
-                "three": "eight three"
-            }
-        }
     }
 ]
 """ Contents of test config files used as the source for a config object """
@@ -192,38 +166,3 @@ class ConfigBehaviour(unittest.TestCase):
         assert self.loaded_config.get("4") == "fourth 4"
         assert self.loaded_config.get("5.1", exception_if_missing=False) == None
         assert self.loaded_config.get("5") == "seventh 5 json"
-
-    def test_config_format(self):
-        """ test the direct string format options """
-
-        assert self.loaded_config.format("{1}") == self.loaded_config.get("1")
-        # test basic string substitution"
-        assert self.loaded_config.format("{variables:three}") == self.loaded_variables.get("three")
-        # test cross sources string formatting
-        assert self.loaded_config.format("{variables:three?default}") == self.loaded_config.get("12")
-        # test additional config takes precedence over config
-
-    def test_variable_templating(self):
-        """ confirm that values can contain template references to other values """
-
-        assert self.loaded_config.get("7") == self.loaded_config.get("1")
-        # test replacement from the same label/source
-
-        assert self.loaded_config.get("8") == self.loaded_variables.get("one")
-        # test replacement from a different source
-
-        assert self.loaded_config.get("9") == "default"
-        # test formatting default values
-
-        assert self.loaded_config.get("11") == "megadefault"
-        # test a bunch of things together
-
-        assert self.loaded_config.get("12") == self.loaded_variables.get("three")
-        # test that default doesn't swap a positive search
-
-        assert self.loaded_config.get("14") == self.loaded_config.get("12")
-        # test neighbouring templating of a templated target
-
-        assert self.loaded_config.get("15")["1"] == self.loaded_config.get("12")
-        assert self.loaded_config.get("15")["2"]["1"] == self.loaded_config.get("12")
-        # test deep templating
