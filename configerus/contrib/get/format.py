@@ -55,7 +55,7 @@ class ConfigFormatGetPlugin():
         match = self.pattern.search(target, start)
         while match:
             rep = str(self._get(match, default_source))
-            target = target[:match.start()] + rep + target[match.end()]
+            target = target[:match.start()] + rep + target[match.end():]
             start = start + len(rep)
             match = self.pattern.search(target, start)
 

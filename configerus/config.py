@@ -123,7 +123,7 @@ class Config:
 
     def has_source(self, instance_id:str):
         """ Check if a source instance has already been added """
-        return self.plugns.has_plugin(instance_id, Type.CONFIGSOURCE)
+        return self.plugins.has_plugin(instance_id, Type.CONFIGSOURCE)
 
     def add_source(self, plugin_id:str, instance_id:str='', priority:int=PLUGIN_DEFAULT_PRIORITY):
         """ add a new config source to the config object and return it
