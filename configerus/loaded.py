@@ -4,6 +4,9 @@ from .shared import tree_get
 
 logger = logging.getLogger('configerus:loaded')
 
+LOADED_KEY_ROOT = '.'
+""" If this key is requested in .get() then the root data dict is returned """
+
 class Loaded:
     """ A loaded config which contains all of the file config for a single label
 
@@ -81,15 +84,19 @@ class Loaded:
         """
         value = ""
 
-        try:
-            value = tree_get(self.data, key)
-        except KeyError as e:
-            if exception_if_missing:
-                # hand off the exception
-                raise e
-            else:
-                logger.debug("Failed to find config key : %s", key)
-                return None
+        if key == LOADED_KEY_ROOT:
+            value = self.data
+
+        else:
+            try:
+                value = tree_get(self.data, key)
+            except KeyError as e:
+                if exception_if_missing:
+                    # hand off the exception
+                    raise e
+                else:
+                    logger.debug("Failed to find config key : %s", key)
+                    return None
 
         # try to format any string values
         value = self.format(value)

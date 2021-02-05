@@ -87,15 +87,17 @@ class Config:
         The factory should return the plugin, which is likely going to be some kind
         of an object which has value to the caller of the function. This function
         does not specify what the return needs to be.
+
         """
-        logger.info("Running bootstrap entrypoint: %s", bootstrap_id)
+        logger.info("Running configerus bootstrap entrypoint: %s", bootstrap_id)
         eps = metadata.entry_points()[CONFIGERUS_BOOTSTRAP_ENTRYPOINT]
         for ep in eps:
             if ep.name == bootstrap_id:
-                plugin = ep.load()
-                return plugin(self)
+                bootstrap_entrypoint = ep.load()
+                bootstrap_entrypoint(self)
+                break
         else:
-            raise KeyError("Bootstrap not found {}.{}".format(bootstrap_id, CONFIGERUS_BOOTSTRAP_ENTRYPOINT))
+            raise KeyError("Bootstrap not found {}:{}".format(CONFIGERUS_BOOTSTRAP_ENTRYPOINT, bootstrap_id))
 
     """ Pass through accessors
 
@@ -247,15 +249,26 @@ class Config:
         """
         return self.plugins.add_plugin(Type.FORMATTER, plugin_id, instance_id, priority)
 
-    def format(self, data, default_label:str):
+    def format(self, data, default_label:str, validator:str=""):
         """ Format some data using the config object formatters
 
         data (Any): primitive data that should be formatted. The data will be
             passed to the formatter plugins in descending priority order.
 
+        default_label (str) : because string templating can indicate a replace
+            target without a label source, a default source is used to tell a
+            formatter what config label to use in its absence.
+
+        validator (str) : optional validation string to apply to the formatted
+            data
+
         """
         for formatter in self.plugins.get_ordered_plugins(Type.FORMATTER):
             data = formatter.format(data, default_label)
+
+        if validator:
+            self.validate(self.loaded[label].data, validator)
+
         return data
 
 

@@ -24,6 +24,7 @@ def new_config(bootstraps:List[str]=CONFIGERUS_BOOSTRAP_DEFAULT):
         2. the bootstrap can modify the config object as needed.
 
     """
+    # start with a new config object
     config = Config()
 
     for bootstrap_entrypoint_id in bootstraps:
