@@ -148,7 +148,7 @@ class PluginInstances:
         for instance in self.instances:
             plugin_copy = copy.deepcopy(instance.plugin)
             plugin_copy.config = new_config
-            instances_copy.instances.append(PluginInstance(instance.type, instance.instance_id, instance.priority, plugin_copy))
+            instances_copy.instances.append(PluginInstance(instance.type, instance.plugin_id, instance.instance_id, instance.priority, plugin_copy))
         return instances_copy
 
     def add_plugin(self, type:Type, plugin_id:str, instance_id:str, priority:int):
@@ -197,7 +197,7 @@ class PluginInstances:
         try:
             fac = Factory(type, plugin_id)
             plugin = fac.create(self.config, instance_id)
-            instance = PluginInstance(type, instance_id, priority, plugin)
+            instance = PluginInstance(type, plugin_id, instance_id, priority, plugin)
 
         except NotImplementedError as e:
             raise NotImplementedError("Could not create configerus plugin '{}:{}' as that plugin_id could not be found.".format(type.value, plugin_id)) from e
@@ -205,20 +205,34 @@ class PluginInstances:
         self.instances.append(instance)
         return plugin
 
-    def get_plugin(self, instance_id, type:Type=None, exception_if_missing: bool=True):
-        """ Retrieve a plugin from its instance_id, optionally of a specific type """
-        for plugin_instance in self.instances:
-            if plugin_instance.instance_id==instance_id and (type==None or type==plugin_instance.type):
-                return plugin_instance.plugin
+    """ Accessing plugins """
 
+    def __getitem__(self, instance_id):
+        """ For subscriptions assume that an instance_id is being retrieved """
+        return self.get_plugin(instance_id=instance_id)
+
+    def get_plugin(self, instance_id:str='', plugin_id:str='', type:Type=None, exception_if_missing: bool=True):
+        """ Retrieve a plugin from its instance_id, optionally of a specific type """
+        if not (plugin_id or instance_id or type):
+            raise Exception("To get a plugin you must for at least one of plugin_id, instance_id or type")
+
+        for plugin_instance in self.instances:
+            if plugin_id and not plugin_instance.plugin_id == plugin_id:
+                continue
+            elif instance_id and not plugin_instance.instance_id==instance_id:
+                continue
+            elif type and not type==plugin_instance.type:
+                continue
+
+            return plugin_instance.plugin
         if exception_if_missing:
             raise KeyError("Could not find plugin {}".format(instance_id if type is None else "{}:{}".format(type.value, instance_id)))
         return False
 
-    def has_plugin(self, instance_id, type:Type=None):
+    def has_plugin(self, instance_id:str='', plugin_id:str='', type:Type=None):
         """ Discover if a plugin had been added with an instance_id, optionally
             of a specific type """
-        return bool(self.get_plugin(instance_id, type, exception_if_missing=False))
+        return bool(self.get_plugin(plugin_id, instance_id, type, exception_if_missing=False))
 
     def get_ordered_plugins(self, type:Type=None):
         """ order plugin, optionally just one type, by their top down priority
@@ -237,8 +251,9 @@ class PluginInstances:
 class PluginInstance:
     """ a struct for a plugin instance that also keeps metadata about the instance """
 
-    def __init__(self, type:Type, instance_id:str, priority:int, plugin):
+    def __init__(self, type:Type, plugin_id:str, instance_id:str, priority:int, plugin):
         self.type = type
+        self.plugin_id = plugin_id
         self.instance_id = instance_id
         self.priority = priority
         self.plugin = plugin
