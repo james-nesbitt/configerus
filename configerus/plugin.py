@@ -7,15 +7,17 @@ from enum import Enum, unique
 logger = logging.getLogger('configerus.plugin')
 # logger.setLevel(level=logging.DEBUG)
 
+
 @unique
 class Type(Enum):
     """ Enumerator to match plugin types to plugin labels """
     CONFIGSOURCE = "configerus.plugin.configsource"
     """ A Config source handler """
-    FORMATTER    = "configerus.plugin.formatter"
+    FORMATTER = "configerus.plugin.formatter"
     """ A string formatter plugin """
-    VALIDATOR    = "configerus.plugin.validator"
+    VALIDATOR = "configerus.plugin.validator"
     """ A data result validator plugin """
+
 
 class Factory():
     """ Python decorator class for configuerus Plugin factories
@@ -62,7 +64,9 @@ class Factory():
         try:
             factory = self.registry[self.type.value][self.plugin_id]
         except KeyError:
-            raise NotImplementedError("Configerus Plugin instance '{}:{}' has not been registered.".format(self.type.value, self.plugin_id))
+            raise NotImplementedError(
+                "Configerus Plugin instance '{}:{}' has not been registered.".format(
+                    self.type.value, self.plugin_id))
         # except Exception as e:
         #     raise Exception("Could not create Plugin instance '{}:{}' as the plugin factory produced an exception".format(self.type.value, self.plugin_id)) from e
 
@@ -71,6 +75,8 @@ class Factory():
 
 CONFIGERUS_FORMATTER_TYPE = Type.FORMATTER
 """ Short cut to the config source plugin type enum """
+
+
 class FormatFactory(Factory):
     """ Decoration class for registering a config source plugin
 
@@ -80,6 +86,7 @@ class FormatFactory(Factory):
     All we do is extend the core Factory plugin and pass in the plugin type
     for formatters.
     """
+
     def __init__(self, plugin_id: str):
         """ register the decoration """
         super().__init__(CONFIGERUS_FORMATTER_TYPE, plugin_id)
@@ -87,6 +94,8 @@ class FormatFactory(Factory):
 
 CONFIGERUS_SOURCE_TYPE = Type.CONFIGSOURCE
 """ Short cut to the config source plugin type enum """
+
+
 class SourceFactory(Factory):
     """ Decoration class for registering a config source plugin
 
@@ -96,6 +105,7 @@ class SourceFactory(Factory):
     All we do is extend the core Factory plugin and pass in the plugin type
     for formatters.
     """
+
     def __init__(self, plugin_id: str):
         """ register the decoration """
         super().__init__(CONFIGERUS_SOURCE_TYPE, plugin_id)
@@ -103,6 +113,8 @@ class SourceFactory(Factory):
 
 CONFIGERUS_VALIDATOR_TYPE = Type.VALIDATOR
 """ Short cut to the validate plugin type enum """
+
+
 class ValidatorFactory(Factory):
     """ Decoration class for registering a validate plugin
 
@@ -112,6 +124,7 @@ class ValidatorFactory(Factory):
     All we do is extend the core Factory plugin and pass in the plugin type
     for formatters.
     """
+
     def __init__(self, plugin_id: str):
         """ register the decoration """
         super().__init__(CONFIGERUS_VALIDATOR_TYPE, plugin_id)
@@ -148,10 +161,16 @@ class PluginInstances:
         for instance in self.instances:
             plugin_copy = copy.deepcopy(instance.plugin)
             plugin_copy.config = new_config
-            instances_copy.instances.append(PluginInstance(instance.type, instance.plugin_id, instance.instance_id, instance.priority, plugin_copy))
+            instances_copy.instances.append(
+                PluginInstance(
+                    instance.type,
+                    instance.plugin_id,
+                    instance.instance_id,
+                    instance.priority,
+                    plugin_copy))
         return instances_copy
 
-    def add_plugin(self, type:Type, plugin_id:str, instance_id:str, priority:int):
+    def add_plugin(self, type: Type, plugin_id: str, instance_id: str, priority: int):
         """ Create a configerus plugin and add it to the config object
 
         Parameters:
@@ -200,7 +219,9 @@ class PluginInstances:
             instance = PluginInstance(type, plugin_id, instance_id, priority, plugin)
 
         except NotImplementedError as e:
-            raise NotImplementedError("Could not create configerus plugin '{}:{}' as that plugin_id could not be found.".format(type.value, plugin_id)) from e
+            raise NotImplementedError(
+                "Could not create configerus plugin '{}:{}' as that plugin_id could not be found.".format(
+                    type.value, plugin_id)) from e
 
         self.instances.append(instance)
         return plugin
@@ -211,7 +232,8 @@ class PluginInstances:
         """ For subscriptions assume that an instance_id is being retrieved """
         return self.get_plugin(instance_id=instance_id)
 
-    def get_plugin(self, instance_id:str='', plugin_id:str='', type:Type=None, exception_if_missing: bool=True):
+    def get_plugin(self, instance_id: str = '', plugin_id: str = '',
+                   type: Type = None, exception_if_missing: bool = True):
         """ Retrieve a plugin from its instance_id, optionally of a specific type """
         if not (plugin_id or instance_id or type):
             raise Exception("To get a plugin you must for at least one of plugin_id, instance_id or type")
@@ -219,22 +241,25 @@ class PluginInstances:
         for plugin_instance in self.instances:
             if plugin_id and not plugin_instance.plugin_id == plugin_id:
                 continue
-            elif instance_id and not plugin_instance.instance_id==instance_id:
+            elif instance_id and not plugin_instance.instance_id == instance_id:
                 continue
-            elif type and not type==plugin_instance.type:
+            elif type and not type == plugin_instance.type:
                 continue
 
             return plugin_instance.plugin
         if exception_if_missing:
-            raise KeyError("Could not find plugin {}".format(instance_id if type is None else "{}:{}".format(type.value, instance_id)))
+            raise KeyError(
+                "Could not find plugin {}".format(
+                    instance_id if type is None else "{}:{}".format(
+                        type.value, instance_id)))
         return False
 
-    def has_plugin(self, instance_id:str='', plugin_id:str='', type:Type=None):
+    def has_plugin(self, instance_id: str = '', plugin_id: str = '', type: Type = None):
         """ Discover if a plugin had been added with an instance_id, optionally
             of a specific type """
         return bool(self.get_plugin(plugin_id, instance_id, type, exception_if_missing=False))
 
-    def get_ordered_plugins(self, type:Type=None):
+    def get_ordered_plugins(self, type: Type = None):
         """ order plugin, optionally just one type, by their top down priority
 
         we process the plugins in three steps:
@@ -243,15 +268,16 @@ class PluginInstances:
         3. collect just the instance plugin objects
 
         """
-        typed_instances = [instance for instance in self.instances if (type is None or instance.type==type)]
+        typed_instances = [instance for instance in self.instances if (type is None or instance.type == type)]
         sorted_instances = sorted(typed_instances, key=lambda instance: instance.priority)
         sorted_instances.reverse()
         return [instance.plugin for instance in sorted_instances]
 
+
 class PluginInstance:
     """ a struct for a plugin instance that also keeps metadata about the instance """
 
-    def __init__(self, type:Type, plugin_id:str, instance_id:str, priority:int, plugin):
+    def __init__(self, type: Type, plugin_id: str, instance_id: str, priority: int, plugin):
         self.type = type
         self.plugin_id = plugin_id
         self.instance_id = instance_id

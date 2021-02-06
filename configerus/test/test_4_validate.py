@@ -7,6 +7,9 @@ using the configerus.contric.jsonscheme validator plugin.
 
 """
 
+from configerus.contrib.jsonschema import PLUGIN_ID_VALIDATE_JSONSCHEMA
+from configerus.contrib.dict import PLUGIN_ID_CONFIGSOURCE_DICT
+import configerus
 import unittest
 import logging
 
@@ -14,23 +17,21 @@ logging.basicConfig()
 logger = logging.getLogger('validate')
 logger.setLevel(level=logging.INFO)
 
-import configerus
-from configerus.contrib.dict import PLUGIN_ID_CONFIGSOURCE_DICT
-from configerus.contrib.jsonschema import PLUGIN_ID_VALIDATE_JSONSCHEMA
 
 """ TESTS """
+
 
 class JsonSchemaValidate(unittest.TestCase):
     """ Some simple validation testing usinf jsonschema """
 
     # examples from https://python-jsonschema.readthedocs.io/en/stable/
-    valid_instance = {"name" : "Eggs", "price" : 34.99}
-    invalid_instance = {"name" : "Eggs", "price" : "Invalid"}
+    valid_instance = {"name": "Eggs", "price": 34.99}
+    invalid_instance = {"name": "Eggs", "price": "Invalid"}
     instance_schema = {
-        "type" : "object",
-        "properties" : {
-            "price" : {"type" : "number"},
-            "name" : {"type" : "string"},
+        "type": "object",
+        "properties": {
+            "price": {"type": "number"},
+            "name": {"type": "string"},
         }
     }
 

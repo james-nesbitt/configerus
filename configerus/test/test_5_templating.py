@@ -116,6 +116,7 @@ config_sources = [
 
 """ TESTS """
 
+
 class ConfigTemplating(unittest.TestCase):
 
     @classmethod
@@ -136,7 +137,7 @@ class ConfigTemplating(unittest.TestCase):
         cls.config = config
 
         cls.loaded_config = config.load("config")
-        cls.loaded_variables =config.load("variables")
+        cls.loaded_variables = config.load("variables")
 
     @classmethod
     def tearDownClass(cls):
@@ -148,7 +149,6 @@ class ConfigTemplating(unittest.TestCase):
         assert self.config.format('{1}', 'config') == "first 1"
         assert self.loaded_config.format('{1}') == "first 1"
         """ Simple formatting at the config and loadedconfig level """
-
 
     def test_format_dot_notation(self):
         """ test that format catches dot notation """
@@ -202,12 +202,12 @@ class ConfigTemplating(unittest.TestCase):
     def test_get_formatted(self):
         """ test that loadedconfig gets format """
 
-        config_one =self.loaded_config.get("1")
+        config_one = self.loaded_config.get("1")
         assert config_one, "Expected value for comparison"
         assert self.config.format('{1}', 'config') == config_one
         """ get should mimic format behaviour, which we tested above """
 
-        variables_three =self.loaded_variables.get("three")
+        variables_three = self.loaded_variables.get("three")
         assert config_one, "Expected value for comparison"
         assert self.loaded_config.format("{variables:three}") == variables_three
         """ test templating for different sources """
@@ -218,14 +218,14 @@ class ConfigTemplating(unittest.TestCase):
 
         try:
             assert self.loaded_config.get("21")
-        except:
+        except BaseException:
             return
         assert False, "expected exception"
 
     def test_deep_formatting(self):
         """ test that formatting is applied deeply """
 
-        config_fourty =self.loaded_config.get("40")
+        config_fourty = self.loaded_config.get("40")
         assert config_fourty, "Expected value for comparison"
 
         assert self.loaded_config.get("41") == config_fourty

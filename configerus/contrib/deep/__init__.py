@@ -8,6 +8,8 @@ PLUGIN_ID_FORMAT_DEEP = 'deep'
 PLUGIN_PRIORITY_FORMAT_DEEP = 90
 
 """ Format plugin_id for the configerus deep format plugin """
+
+
 @FormatFactory(plugin_id=PLUGIN_ID_FORMAT_DEEP)
 def plugin_factory_format_deep(config: Config, instance_id: str = ''):
     """ create an format plugin which recursiveley formats data """

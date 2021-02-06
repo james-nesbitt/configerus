@@ -123,6 +123,7 @@ config_sources = [
 
 """ TESTS """
 
+
 class ConfigBehaviour(unittest.TestCase):
 
     @classmethod
@@ -143,7 +144,7 @@ class ConfigBehaviour(unittest.TestCase):
         cls.config = config
 
         cls.loaded_config = config.load("config")
-        cls.loaded_variables =config.load("variables")
+        cls.loaded_variables = config.load("variables")
 
     @classmethod
     def tearDownClass(cls):
@@ -164,5 +165,5 @@ class ConfigBehaviour(unittest.TestCase):
         """ confirm that keys defined in more than one source get overriden """
 
         assert self.loaded_config.get("4") == "fourth 4"
-        assert self.loaded_config.get("5.1", exception_if_missing=False) == None
+        assert self.loaded_config.get("5.1", exception_if_missing=False) is None
         assert self.loaded_config.get("5") == "seventh 5 json"

@@ -7,7 +7,7 @@ from .loaded import Loaded
 
 logger = logging.getLogger('configerus:config')
 
-CONFIGERUS_BOOTSTRAP_ENTRYPOINT="configerus.bootstrap"
+CONFIGERUS_BOOTSTRAP_ENTRYPOINT = "configerus.bootstrap"
 """ SetupTools entrypoint target for bootstrapping """
 
 CONFIG_PATH_LABEL = 'paths'
@@ -26,6 +26,7 @@ General approach:
 >90 !important (project)
 
 """
+
 
 class Config:
     """ Config management class (v3)
@@ -70,7 +71,7 @@ class Config:
         copy.plugins = self.plugins.copy(copy)
         return copy
 
-    def bootstrap(self, bootstrap_id:str):
+    def bootstrap(self, bootstrap_id: str):
         """
         Make a plugin object instance of a type and key
 
@@ -123,11 +124,11 @@ class Config:
 
     """
 
-    def has_source(self, instance_id:str):
+    def has_source(self, instance_id: str):
         """ Check if a source instance has already been added """
         return self.plugins.has_plugin(instance_id, Type.CONFIGSOURCE)
 
-    def add_source(self, plugin_id:str, instance_id:str='', priority:int=PLUGIN_DEFAULT_PRIORITY):
+    def add_source(self, plugin_id: str, instance_id: str = '', priority: int = PLUGIN_DEFAULT_PRIORITY):
         """ add a new config source to the config object and return it
 
         Parameters:
@@ -154,7 +155,7 @@ class Config:
         """
         return self.plugins.add_plugin(Type.CONFIGSOURCE, plugin_id, instance_id, priority)
 
-    def load(self, label:str, force_reload:bool=False, validator:str=""):
+    def load(self, label: str, force_reload: bool = False, validator: str = ""):
         """ Load a config label
 
         This queries all sources for the label and merges the loaded config data
@@ -201,7 +202,8 @@ class Config:
                     data = tree_merge(data, source_data)
 
             if not data:
-                raise KeyError("Config '{}' loaded data came out empty.  That means that no config source could find that label.  That is likely a problem".format(label))
+                raise KeyError(
+                    "Config '{}' loaded data came out empty.  That means that no config source could find that label.  That is likely a problem".format(label))
 
             self.loaded[label] = Loaded(data=data, parent=self, instance_id=label)
 
@@ -216,14 +218,14 @@ class Config:
 
     """
 
-    def has_formatter(self, instance_id:str):
+    def has_formatter(self, instance_id: str):
         """ Check if a formatter instance has already been added
 
         You can use this in abstracts to detect if you've already added a plugin
         """
         return self.plugns.has_plugin(instance_id, Type.FORMATTER)
 
-    def add_formatter(self, plugin_id:str, instance_id:str='', priority:int=PLUGIN_DEFAULT_PRIORITY):
+    def add_formatter(self, plugin_id: str, instance_id: str = '', priority: int = PLUGIN_DEFAULT_PRIORITY):
         """ add a new config formatter to the config object and return it
 
         Parameters:
@@ -249,7 +251,7 @@ class Config:
         """
         return self.plugins.add_plugin(Type.FORMATTER, plugin_id, instance_id, priority)
 
-    def format(self, data, default_label:str, validator:str=""):
+    def format(self, data, default_label: str, validator: str = ""):
         """ Format some data using the config object formatters
 
         data (Any): primitive data that should be formatted. The data will be
@@ -271,21 +273,20 @@ class Config:
 
         return data
 
-
     """ Validator plugin usage and management
 
 
 
     """
 
-    def has_validator(self, instance_id:str):
+    def has_validator(self, instance_id: str):
         """ Check if a formatter instance has already been added
 
         You can use this in abstracts to detect if you've already added a plugin
         """
         return self.plugns.has_plugin(instance_id, Type.VALIDATOR)
 
-    def add_validator(self, plugin_id:str, instance_id:str='', priority:int=PLUGIN_DEFAULT_PRIORITY):
+    def add_validator(self, plugin_id: str, instance_id: str = '', priority: int = PLUGIN_DEFAULT_PRIORITY):
         """ add a new config validator to the config object and return it
 
         Parameters:
@@ -311,7 +312,7 @@ class Config:
         """
         return self.plugins.add_plugin(Type.VALIDATOR, plugin_id, instance_id, priority)
 
-    def validate(self, data, validate_target:str, exception_if_invalid:bool=True):
+    def validate(self, data, validate_target: str, exception_if_invalid: bool = True):
         """ Format some data using the config object formatters
 
         data (Any): primitive data that should be formatted. The data will be

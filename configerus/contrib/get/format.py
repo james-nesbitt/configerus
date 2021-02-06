@@ -20,17 +20,18 @@ so:
    key cannot be found
 """
 
+
 class ConfigFormatGetPlugin():
     """   """
 
-    def __init__(self, config:Config, instance_id:str):
+    def __init__(self, config: Config, instance_id: str):
         """  """
         self.config = config
         self.instance_id = config
 
         self.pattern = re.compile(CONFIG_DEFAULT_MATCH_PATTERN)
 
-    def format(self, target, default_source:str):
+    def format(self, target, default_source: str):
         """ Format a string by substituting config values
 
         target: a string that should be formatted. If not a string then no
@@ -61,7 +62,7 @@ class ConfigFormatGetPlugin():
 
         return target
 
-    def _get(self, match, default_source:str):
+    def _get(self, match, default_source: str):
         """ from an re.match get data from config """
         key = match.group('key')
         source = match.group('source')

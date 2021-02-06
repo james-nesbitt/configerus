@@ -6,13 +6,13 @@ Simple tests that ensure that the Config construction isn't broken
 
 """
 
+import configerus
 import unittest
 import logging
 
 logger = logging.getLogger("basic_construct")
 logger.setLevel(level=logging.INFO)
 
-import configerus
 
 class BasicConstruct(unittest.TestCase):
 
@@ -27,6 +27,7 @@ class BasicConstruct(unittest.TestCase):
     def test_construct_3_bootsraps(self):
         """ Make sure we can create a Configs object, with default bootstraps """
         config = configerus.new_config()
+
 
 if __name__ == '__main__':
     unittest.main()

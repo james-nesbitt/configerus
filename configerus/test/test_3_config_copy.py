@@ -7,6 +7,8 @@ changing those copies doesn't affect originals.
 
 """
 
+from configerus.contrib.dict import PLUGIN_ID_CONFIGSOURCE_DICT
+import configerus
 import unittest
 import logging
 
@@ -14,10 +16,9 @@ logging.basicConfig()
 logger = logging.getLogger('config_copy')
 logger.setLevel(level=logging.INFO)
 
-import configerus
-from configerus.contrib.dict import PLUGIN_ID_CONFIGSOURCE_DICT
 
 """ TESTS """
+
 
 class ConfigBehaviour(unittest.TestCase):
 
@@ -54,14 +55,14 @@ class ConfigBehaviour(unittest.TestCase):
         config1_copy = copy1.load('copy')
         config2_copy = copy2.load('copy')
 
-        logger.debug('LOADED: AFTER: orig: %s',config_copy_orig.data )
-        logger.debug('LOADED: AFTER: 1   : %s',config1_copy.data )
-        logger.debug('LOADED: AFTER: 2   : %s',config2_copy.data )
-        logger.debug('LOADED: AFTER: late: %s',config_copy_late.data )
+        logger.debug('LOADED: AFTER: orig: %s', config_copy_orig.data)
+        logger.debug('LOADED: AFTER: 1   : %s', config1_copy.data)
+        logger.debug('LOADED: AFTER: 2   : %s', config2_copy.data)
+        logger.debug('LOADED: AFTER: late: %s', config_copy_late.data)
 
         # check original values
         assert config_copy_orig.get('one') == 'orig 1'
-        assert config_copy_orig.get('two') == None
+        assert config_copy_orig.get('two') is None
         # check that copied config didn't modify original
         assert config_copy_orig.get('one') == config_copy_late.get('one')
         assert config_copy_orig.get('two') == config_copy_late.get('two')
