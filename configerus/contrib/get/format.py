@@ -27,7 +27,7 @@ class ConfigFormatGetPlugin():
     def __init__(self, config: Config, instance_id: str):
         """  """
         self.config = config
-        self.instance_id = config
+        self.instance_id = instance_id
 
         self.pattern = re.compile(CONFIG_DEFAULT_MATCH_PATTERN)
 

@@ -11,7 +11,7 @@ class JsonSchemaValidatorPlugin():
     def __init__(self, config: Config, instance_id: str):
         """  """
         self.config = config
-        self.instance_id = config
+        self.instance_id = instance_id
 
     def validate(self, validate_target: str, data):
         """ Validate a structure using jsonschema pulled from a config key """

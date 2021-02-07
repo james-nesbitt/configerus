@@ -7,8 +7,8 @@ import json
 import yaml
 
 from configerus.config import Config
-from configerus.contrib.dict import PLUGIN_ID_CONFIGSOURCE_DICT
-from configerus.contrib.files import PLUGIN_ID_CONFIGSOURCE_PATH
+from configerus.contrib.dict import PLUGIN_ID_SOURCE_DICT
+from configerus.contrib.files import PLUGIN_ID_SOURCE_PATH
 
 logger = logging.getLogger('configerus:tests')
 
@@ -28,11 +28,11 @@ def make_test_config(config: Config, sources: List):
         type = source["type"]
         data = source["data"]
 
-        if type == PLUGIN_ID_CONFIGSOURCE_DICT:
+        if type == PLUGIN_ID_SOURCE_DICT:
             logger.info("Adding 'dict' source '%s' [%s]: %s", name, priority, data.keys())
             config.add_source(type, name, priority).set_data(data)
 
-        elif type == PLUGIN_ID_CONFIGSOURCE_PATH:
+        elif type == PLUGIN_ID_SOURCE_PATH:
             # on first use, get a temp dir
             if not TEST_CONFIG_TEMP_DIR:
                 TEST_CONFIG_TEMP_DIR = mkdtemp()

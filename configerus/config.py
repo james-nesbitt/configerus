@@ -1,7 +1,9 @@
 import logging
 from importlib import metadata
+import copy
 
-from .plugin import Factory, Type, PluginInstances
+from .plugin import Factory, Type
+from .instances import PluginInstances
 from .shared import tree_merge
 from .loaded import Loaded
 
@@ -26,7 +28,6 @@ General approach:
 >90 !important (project)
 
 """
-
 
 class Config:
     """ Config management class (v3)
@@ -54,7 +55,7 @@ class Config:
     """
 
     def __init__(self):
-        self.plugins = PluginInstances(self)
+        self.plugins = PluginInstances(self.make_plugin)
         """ keep a list of all of the plugins as PluginInstance wrappers
 
             This mixes plugin types together but but it simplifies management
@@ -68,7 +69,7 @@ class Config:
             the copy without affecting the original.
         """
         copy = Config()
-        copy.plugins = self.plugins.copy(copy)
+        copy.plugins = self.plugins.copy(copy.make_plugin, copy.copy_plugin)
         return copy
 
     def bootstrap(self, bootstrap_id: str):
@@ -115,6 +116,19 @@ class Config:
         """ Return the default priority for relative priority setting """
         return PLUGIN_DEFAULT_PRIORITY
 
+    """ Plugin factory """
+
+    def make_plugin(self, type: Type, plugin_id: str, instance_id: str, priority: int = PLUGIN_DEFAULT_PRIORITY):
+        """ Make a new plugin """
+        fac = Factory(type, plugin_id)
+        return fac.create(self, instance_id)
+
+    def copy_plugin(self, plugin: object):
+        """ Make a plugin object """
+        plugin_copy = copy.deepcopy(plugin)
+        plugin_copy.config = self
+        return plugin_copy
+
     """ Source plugins
 
     All methods related to managing and using source plugins.
@@ -126,7 +140,7 @@ class Config:
 
     def has_source(self, instance_id: str):
         """ Check if a source instance has already been added """
-        return self.plugins.has_plugin(instance_id, Type.CONFIGSOURCE)
+        return self.plugins.has_plugin(instance_id, Type.SOURCE)
 
     def add_source(self, plugin_id: str, instance_id: str = '', priority: int = PLUGIN_DEFAULT_PRIORITY):
         """ add a new config source to the config object and return it
@@ -153,7 +167,7 @@ class Config:
         supports, and the code here doesn't need to get fancy with function arguments
 
         """
-        return self.plugins.add_plugin(Type.CONFIGSOURCE, plugin_id, instance_id, priority)
+        return self.plugins.add_plugin(Type.SOURCE, plugin_id, instance_id, priority)
 
     def load(self, label: str, force_reload: bool = False, validator: str = ""):
         """ Load a config label
@@ -196,7 +210,7 @@ class Config:
 
             data = {}
             # merge in data from the higher priorty into the lower priority
-            for source in self.plugins.get_ordered_plugins(Type.CONFIGSOURCE):
+            for source in self.plugins.get_plugins(type=Type.SOURCE):
                 source_data = source.load(label)
                 if source_data:
                     data = tree_merge(data, source_data)
@@ -212,11 +226,7 @@ class Config:
 
         return self.loaded[label]
 
-    """ Formatter plugin usage and management
-
-
-
-    """
+    """ Formatter plugin usage and management """
 
     def has_formatter(self, instance_id: str):
         """ Check if a formatter instance has already been added
@@ -265,7 +275,7 @@ class Config:
             data
 
         """
-        for formatter in self.plugins.get_ordered_plugins(Type.FORMATTER):
+        for formatter in self.plugins.get_plugins(type=Type.FORMATTER, exception_if_missing=False):
             data = formatter.format(data, default_label)
 
         if validator:
@@ -273,11 +283,7 @@ class Config:
 
         return data
 
-    """ Validator plugin usage and management
-
-
-
-    """
+    """ Validator plugin usage and management """
 
     def has_validator(self, instance_id: str):
         """ Check if a formatter instance has already been added
@@ -323,7 +329,7 @@ class Config:
         """
 
         try:
-            for validator in self.plugins.get_ordered_plugins(Type.VALIDATOR):
+            for validator in self.plugins.get_plugins(type=Type.VALIDATOR, exception_if_missing=False):
                 validator.validate(validate_target, data)
         except Exception as e:
             if exception_if_invalid:

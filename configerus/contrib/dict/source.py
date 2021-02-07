@@ -8,7 +8,7 @@ class ConfigSourceDictPlugin():
     def __init__(self, config: Config, instance_id: str):
         """  """
         self.config = config
-        self.instance_id = config
+        self.instance_id = instance_id
 
         self.data = {}
         """ keep the data that we will use for searching """
