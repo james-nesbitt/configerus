@@ -11,6 +11,7 @@ from typing import List
 
 logger = logging.getLogger('configerus.instance')
 
+
 class PluginInstances:
     """ List of plugins wrapped in the PluginInstance struct so that it can be
         prioritized and managed.
@@ -200,9 +201,8 @@ class PluginInstances:
         return self.get_instance(plugin_id=plugin_id, instance_id=instance_id, type=type,
                                  exception_if_missing=exception_if_missing).plugin
 
-
     def get_plugins(self, plugin_id: str = '', instance_id: str = '',
-                   type: str = '', exception_if_missing: bool = True) -> object:
+                    type: str = '', exception_if_missing: bool = True) -> object:
         """ Retrieve matching plugins
 
         Parameters:
