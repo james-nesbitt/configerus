@@ -9,10 +9,12 @@ PLUGIN_ID_VALIDATE_JSONSCHEMA = 'jsonschema'
 PLUGIN_PRIORITY_VALIDATE_JSONSCHEMA_PRIORITY = 60
 """ bootstrapping jsonschema validate plugin priority """
 
+
 @ValidatorFactory(plugin_id=PLUGIN_ID_VALIDATE_JSONSCHEMA)
 def plugin_factory_validator_schema(config: Config, instance_id: str = ''):
     """ create a validate plugin which applies json schema validation """
     return JsonSchemaValidatorPlugin(config, instance_id)
+
 
 def configerus_bootstrap(config: Config):
     """ Bootstrap a config object by adding our formatter """

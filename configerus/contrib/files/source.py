@@ -7,19 +7,20 @@ from configerus.config import Config
 from configerus.shared import tree_merge
 
 # FileTypes that this class can use at this time
-FILESOURCE_FILETYPES = [ "json", "yaml", "yml" ]
+FILESOURCE_FILETYPES = ["json", "yaml", "yml"]
 """ Valid config types that the config loader can currently handled """
 
 CONFIGERUS_PATH_LABEL = 'paths'
 """ If you load this label, it is meant to be return a keyed path """
 
+
 class ConfigSourcePathPlugin:
     """   """
 
-    def __init__(self, config:Config, instance_id:str):
+    def __init__(self, config: Config, instance_id: str):
         """  """
         self.config = config
-        self.instance_id = config
+        self.instance_id = instance_id
 
         self.path = ''
 
@@ -48,7 +49,9 @@ class ConfigSourcePathPlugin:
         """
 
         if not os.path.isdir(self.path):
-            raise ValueError("Could not load '{}' path config, as the source path does not exist: {}".format(self.instance_id, self.path))
+            raise ValueError(
+                "Could not load '{}' path config, as the source path does not exist: {}".format(
+                    self.instance_id, self.path))
 
         # Special case for retreiving paths instead of config
         if label == CONFIGERUS_PATH_LABEL:
@@ -69,7 +72,10 @@ class ConfigSourcePathPlugin:
                     try:
                         file_config = json.load(matching_file)
                     except json.decoder.JSONDecodeError as e:
-                        raise ValueError("Failed to parse one of the config files '{}': {}".format(os.path.join(self.path, file), e))
+                        raise ValueError(
+                            "Failed to parse one of the config files '{}': {}".format(
+                                os.path.join(
+                                    self.path, file), e))
 
                     assert file_config, "Empty config in {} from file {}".format(path, file)
                     data = tree_merge(file_config, data)
@@ -77,12 +83,16 @@ class ConfigSourcePathPlugin:
                     try:
                         file_config = yaml.load(matching_file, Loader=yaml.FullLoader)
                     except yaml.YAMLError as e:
-                        raise ValueError("Failed to parse one of the config files '{}': {}".format(os.path.join(self.path, file), e))
+                        raise ValueError(
+                            "Failed to parse one of the config files '{}': {}".format(
+                                os.path.join(
+                                    self.path, file), e))
 
                     assert file_config, "Empty config in {} [{}]".format(file, self.path)
                     data = tree_merge(file_config, data)
 
                 else:
-                    raise ValueError("Unknown config filetype. Cannot parse '{}' files, but it matches our regex".format(extension))
+                    raise ValueError(
+                        "Unknown config filetype. Cannot parse '{}' files, but it matches our regex".format(extension))
 
         return data

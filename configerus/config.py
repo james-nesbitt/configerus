@@ -1,13 +1,15 @@
 import logging
 from importlib import metadata
+import copy
 
-from .plugin import Factory, Type, PluginInstances
+from .plugin import Factory, Type
+from .instances import PluginInstances
 from .shared import tree_merge
 from .loaded import Loaded
 
 logger = logging.getLogger('configerus:config')
 
-CONFIGERUS_BOOTSTRAP_ENTRYPOINT="configerus.bootstrap"
+CONFIGERUS_BOOTSTRAP_ENTRYPOINT = "configerus.bootstrap"
 """ SetupTools entrypoint target for bootstrapping """
 
 CONFIG_PATH_LABEL = 'paths'
@@ -53,7 +55,7 @@ class Config:
     """
 
     def __init__(self):
-        self.plugins = PluginInstances(self)
+        self.plugins = PluginInstances(self.make_plugin)
         """ keep a list of all of the plugins as PluginInstance wrappers
 
             This mixes plugin types together but but it simplifies management
@@ -67,10 +69,10 @@ class Config:
             the copy without affecting the original.
         """
         copy = Config()
-        copy.plugins = self.plugins.copy(copy)
+        copy.plugins = self.plugins.copy(copy.make_plugin, copy.copy_plugin)
         return copy
 
-    def bootstrap(self, bootstrap_id:str):
+    def bootstrap(self, bootstrap_id: str):
         """
         Make a plugin object instance of a type and key
 
@@ -114,6 +116,19 @@ class Config:
         """ Return the default priority for relative priority setting """
         return PLUGIN_DEFAULT_PRIORITY
 
+    """ Plugin factory """
+
+    def make_plugin(self, type: Type, plugin_id: str, instance_id: str, priority: int = PLUGIN_DEFAULT_PRIORITY):
+        """ Make a new plugin """
+        fac = Factory(type, plugin_id)
+        return fac.create(self, instance_id)
+
+    def copy_plugin(self, plugin: object):
+        """ Make a plugin object """
+        plugin_copy = copy.deepcopy(plugin)
+        plugin_copy.config = self
+        return plugin_copy
+
     """ Source plugins
 
     All methods related to managing and using source plugins.
@@ -123,11 +138,11 @@ class Config:
 
     """
 
-    def has_source(self, instance_id:str):
+    def has_source(self, instance_id: str):
         """ Check if a source instance has already been added """
-        return self.plugins.has_plugin(instance_id, Type.CONFIGSOURCE)
+        return self.plugins.has_plugin(instance_id, Type.SOURCE)
 
-    def add_source(self, plugin_id:str, instance_id:str='', priority:int=PLUGIN_DEFAULT_PRIORITY):
+    def add_source(self, plugin_id: str, instance_id: str = '', priority: int = PLUGIN_DEFAULT_PRIORITY):
         """ add a new config source to the config object and return it
 
         Parameters:
@@ -152,9 +167,9 @@ class Config:
         supports, and the code here doesn't need to get fancy with function arguments
 
         """
-        return self.plugins.add_plugin(Type.CONFIGSOURCE, plugin_id, instance_id, priority)
+        return self.plugins.add_plugin(Type.SOURCE, plugin_id, instance_id, priority)
 
-    def load(self, label:str, force_reload:bool=False, validator:str=""):
+    def load(self, label: str, force_reload: bool = False, validator: str = ""):
         """ Load a config label
 
         This queries all sources for the label and merges the loaded config data
@@ -195,13 +210,14 @@ class Config:
 
             data = {}
             # merge in data from the higher priorty into the lower priority
-            for source in self.plugins.get_ordered_plugins(Type.CONFIGSOURCE):
+            for source in self.plugins.get_plugins(type=Type.SOURCE):
                 source_data = source.load(label)
                 if source_data:
                     data = tree_merge(data, source_data)
 
             if not data:
-                raise KeyError("Config '{}' loaded data came out empty.  That means that no config source could find that label.  That is likely a problem".format(label))
+                raise KeyError(
+                    "Config '{}' loaded data came out empty.  That means that no config source could find that label.  That is likely a problem".format(label))
 
             self.loaded[label] = Loaded(data=data, parent=self, instance_id=label)
 
@@ -210,20 +226,16 @@ class Config:
 
         return self.loaded[label]
 
-    """ Formatter plugin usage and management
+    """ Formatter plugin usage and management """
 
-
-
-    """
-
-    def has_formatter(self, instance_id:str):
+    def has_formatter(self, instance_id: str):
         """ Check if a formatter instance has already been added
 
         You can use this in abstracts to detect if you've already added a plugin
         """
         return self.plugns.has_plugin(instance_id, Type.FORMATTER)
 
-    def add_formatter(self, plugin_id:str, instance_id:str='', priority:int=PLUGIN_DEFAULT_PRIORITY):
+    def add_formatter(self, plugin_id: str, instance_id: str = '', priority: int = PLUGIN_DEFAULT_PRIORITY):
         """ add a new config formatter to the config object and return it
 
         Parameters:
@@ -249,7 +261,7 @@ class Config:
         """
         return self.plugins.add_plugin(Type.FORMATTER, plugin_id, instance_id, priority)
 
-    def format(self, data, default_label:str, validator:str=""):
+    def format(self, data, default_label: str, validator: str = ""):
         """ Format some data using the config object formatters
 
         data (Any): primitive data that should be formatted. The data will be
@@ -263,7 +275,7 @@ class Config:
             data
 
         """
-        for formatter in self.plugins.get_ordered_plugins(Type.FORMATTER):
+        for formatter in self.plugins.get_plugins(type=Type.FORMATTER, exception_if_missing=False):
             data = formatter.format(data, default_label)
 
         if validator:
@@ -271,21 +283,16 @@ class Config:
 
         return data
 
+    """ Validator plugin usage and management """
 
-    """ Validator plugin usage and management
-
-
-
-    """
-
-    def has_validator(self, instance_id:str):
+    def has_validator(self, instance_id: str):
         """ Check if a formatter instance has already been added
 
         You can use this in abstracts to detect if you've already added a plugin
         """
         return self.plugns.has_plugin(instance_id, Type.VALIDATOR)
 
-    def add_validator(self, plugin_id:str, instance_id:str='', priority:int=PLUGIN_DEFAULT_PRIORITY):
+    def add_validator(self, plugin_id: str, instance_id: str = '', priority: int = PLUGIN_DEFAULT_PRIORITY):
         """ add a new config validator to the config object and return it
 
         Parameters:
@@ -311,7 +318,7 @@ class Config:
         """
         return self.plugins.add_plugin(Type.VALIDATOR, plugin_id, instance_id, priority)
 
-    def validate(self, data, validate_target:str, exception_if_invalid:bool=True):
+    def validate(self, data, validate_target: str, exception_if_invalid: bool = True):
         """ Format some data using the config object formatters
 
         data (Any): primitive data that should be formatted. The data will be
@@ -322,7 +329,7 @@ class Config:
         """
 
         try:
-            for validator in self.plugins.get_ordered_plugins(Type.VALIDATOR):
+            for validator in self.plugins.get_plugins(type=Type.VALIDATOR, exception_if_missing=False):
                 validator.validate(validate_target, data)
         except Exception as e:
             if exception_if_invalid:

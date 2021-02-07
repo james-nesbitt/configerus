@@ -7,6 +7,7 @@ logger = logging.getLogger('configerus:loaded')
 LOADED_KEY_ROOT = '.'
 """ If this key is requested in .get() then the root data dict is returned """
 
+
 class Loaded:
     """ A loaded config which contains all of the file config for a single label
 
@@ -18,7 +19,7 @@ class Loaded:
 
     """
 
-    def __init__(self, data, parent, instance_id:str):
+    def __init__(self, data, parent, instance_id: str):
         """
         parameters
         ----------
@@ -47,7 +48,7 @@ class Loaded:
         """
         self.data = data
 
-    def get(self, key: str, format: bool=True, exception_if_missing: bool=False, validator:str=""):
+    def get(self, key: str, format: bool = True, exception_if_missing: bool = False, validator: str = ""):
         """ get a key value from the active label
 
         Here you can use "." (dot) notation to indicated a path down the config

@@ -16,8 +16,8 @@ import logging
 import unittest
 
 import configerus
-from configerus.contrib.dict import PLUGIN_ID_CONFIGSOURCE_DICT
-from configerus.contrib.files import PLUGIN_ID_CONFIGSOURCE_PATH
+from configerus.contrib.dict import PLUGIN_ID_SOURCE_DICT
+from configerus.contrib.files import PLUGIN_ID_SOURCE_PATH
 
 from configerus.test import make_test_config, test_config_cleanup
 
@@ -28,7 +28,7 @@ config_sources = [
     {
         "name": "first",
         "priority": 30,
-        "type": PLUGIN_ID_CONFIGSOURCE_DICT,
+        "type": PLUGIN_ID_SOURCE_DICT,
         "data": {
             "config": {
                 "1": "first 1"
@@ -42,7 +42,7 @@ config_sources = [
     {
         "name": "second",
         "priority": 20,
-        "type": PLUGIN_ID_CONFIGSOURCE_PATH,
+        "type": PLUGIN_ID_SOURCE_PATH,
         "data": {
             "config.json": {
                 "1": "second 1",
@@ -57,7 +57,7 @@ config_sources = [
     {
         "name": "third",
         "priority": 40,
-        "type": PLUGIN_ID_CONFIGSOURCE_PATH,
+        "type": PLUGIN_ID_SOURCE_PATH,
         "data": {
             "config.yaml": {
                 "3": {
@@ -73,7 +73,7 @@ config_sources = [
     {
         "name": "fourth",
         "priority": 75,
-        "type": PLUGIN_ID_CONFIGSOURCE_PATH,
+        "type": PLUGIN_ID_SOURCE_PATH,
         "data": {
             "config.json": {
                 "4": "fourth 4"
@@ -83,7 +83,7 @@ config_sources = [
     {
         "name": "fifth",
         "priority": 75,
-        "type": PLUGIN_ID_CONFIGSOURCE_PATH,
+        "type": PLUGIN_ID_SOURCE_PATH,
         "data": {
             "config.json": {
                 "5": "fifth 5",
@@ -94,7 +94,7 @@ config_sources = [
     {
         "name": "sixth",
         "priority": 75,
-        "type": PLUGIN_ID_CONFIGSOURCE_PATH,
+        "type": PLUGIN_ID_SOURCE_PATH,
         "data": {
             "config.json": {
                 "6": {
@@ -106,7 +106,7 @@ config_sources = [
     {
         "name": "seventh",
         "priority": 85,
-        "type": PLUGIN_ID_CONFIGSOURCE_PATH,
+        "type": PLUGIN_ID_SOURCE_PATH,
         "data": {
             "config.json": {
                 "5": "seventh 5 json",
@@ -122,6 +122,7 @@ config_sources = [
 """ Contents of test config files used as the source for a config object """
 
 """ TESTS """
+
 
 class ConfigBehaviour(unittest.TestCase):
 
@@ -141,9 +142,8 @@ class ConfigBehaviour(unittest.TestCase):
         config = configerus.new_config()
         make_test_config(config, config_sources)
         cls.config = config
-
         cls.loaded_config = config.load("config")
-        cls.loaded_variables =config.load("variables")
+        cls.loaded_variables = config.load("variables")
 
     @classmethod
     def tearDownClass(cls):
@@ -152,17 +152,17 @@ class ConfigBehaviour(unittest.TestCase):
     def test_basic_combined(self):
         """ test some basic file combining by the config object """
 
-        assert self.loaded_config.get("1") == "first 1"
-        assert self.loaded_config.get("2") == "second 2"
+        self.assertEqual(self.loaded_config.get("1"), "first 1")
+        self.assertEqual(self.loaded_config.get("2"), "second 2")
 
     def test_dot_notation(self):
         """ Confirm that we can retrieve data using the dot notation """
 
-        assert self.loaded_config.get("3.1") == "third 3.1"
+        self.assertEqual(self.loaded_config.get("3.1"), "third 3.1")
 
     def test_overrides(self):
         """ confirm that keys defined in more than one source get overriden """
 
-        assert self.loaded_config.get("4") == "fourth 4"
-        assert self.loaded_config.get("5.1", exception_if_missing=False) == None
-        assert self.loaded_config.get("5") == "seventh 5 json"
+        self.assertEqual(self.loaded_config.get("4"), "fourth 4")
+        self.assertIsNone(self.loaded_config.get("5.1", exception_if_missing=False))
+        self.assertEqual(self.loaded_config.get("5"), "seventh 5 json")

@@ -45,14 +45,14 @@ If you have a folder `./config` that has to config files in it:
 - values.json
 ```
 import configerus
-from configerus.contrib.dict import PLUGIN_ID_CONFIGSOURCE_DICT
-from configerus.contrib.files import PLUGIN_ID_CONFIGSOURCE_PATH
+from configerus.contrib.dict import PLUGIN_ID_SOURCE_DICT
+from configerus.contrib.files import PLUGIN_ID_SOURCE_PATH
 
 config = configerus.new_config()
 # tell configerus to read files from a path
-config.add_source(PLUGIN_ID_CONFIGSOURCE_PATH).set_path('./config')
+config.add_source(PLUGIN_ID_SOURCE_PATH).set_path('./config')
 # add a dynamic dict to configerus, with a 90/100 priority
-config.add_source(PLUGIN_ID_CONFIGSOURCE_DICT, priority=90).set_data({
+config.add_source(PLUGIN_ID_SOURCE_DICT, priority=90).set_data({
     'values': {
         'one': 'overriden from dict'
     }

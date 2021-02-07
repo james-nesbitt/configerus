@@ -9,17 +9,18 @@ from configerus.config import Config
 FILES_FORMAT_MATCH_PATTERN = r'(\[(file\:)(?P<file>(~\\)?[\w\\]*(\.[\w]*))\])'
 """ A regex pattern to identify files that should be embedded """
 
+
 class ConfigFormatFilePlugin:
     """   """
 
-    def __init__(self, config:Config, instance_id:str):
+    def __init__(self, config: Config, instance_id: str):
         """  """
         self.config = config
-        self.instance_id = config
+        self.instance_id = instance_id
 
         self.pattern = re.compile(FILES_FORMAT_MATCH_PATTERN)
 
-    def format(self, target, default_source:str):
+    def format(self, target, default_source: str):
         """ Format a string by substituting config values
 
         Parameters
@@ -53,7 +54,7 @@ class ConfigFormatFilePlugin:
 
         return target
 
-    def _get(self, match, return_only_string:bool=True):
+    def _get(self, match, return_only_string: bool = True):
         """ find a file match and return the file contents
 
         Parameters
@@ -93,7 +94,10 @@ class ConfigFormatFilePlugin:
                         try:
                             data = json.load(file_o)
                         except json.decoder.JSONDecodeError as e:
-                            raise ValueError("Failed to parse one of the config files '{}': {}".format(os.path.join(self.path, file), e))
+                            raise ValueError(
+                                "Failed to parse one of the config files '{}': {}".format(
+                                    os.path.join(
+                                        self.path, file), e))
 
                         assert file_config, "Empty config in {} from file {}".format(path, file)
                         return data
@@ -102,14 +106,16 @@ class ConfigFormatFilePlugin:
                         try:
                             data = yaml.load(file_o, Loader=yaml.FullLoader)
                         except yaml.YAMLError as e:
-                            raise ValueError("Failed to parse one of the config files '{}': {}".format(os.path.join(self.path, file), e))
+                            raise ValueError(
+                                "Failed to parse one of the config files '{}': {}".format(
+                                    os.path.join(
+                                        self.path, file), e))
 
                         assert file_config, "Empty config in {} [{}]".format(file, self.path)
                         return data
 
                 # return file contents as a string (above parsing didn't happen)
                 return file.read()
-
 
         except FileNotFound as e:
             raise KeyError("Could not embed file as config as file could not be found: {}".format(file))

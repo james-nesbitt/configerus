@@ -5,9 +5,11 @@ from configerus.plugin import SourceFactory
 
 from .source import ConfigSourceDictPlugin
 
-PLUGIN_ID_CONFIGSOURCE_DICT = 'dict'
+PLUGIN_ID_SOURCE_DICT = 'dict'
 """ ConfigSource plugin_id for the configerus dict configsource plugin """
-@SourceFactory(plugin_id=PLUGIN_ID_CONFIGSOURCE_DICT)
+
+
+@SourceFactory(plugin_id=PLUGIN_ID_SOURCE_DICT)
 def plugin_factory_configsource_dict(config: Config, instance_id: str = ''):
     """ create an configsource dict plugin """
     return ConfigSourceDictPlugin(config, instance_id)

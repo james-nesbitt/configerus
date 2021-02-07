@@ -2,6 +2,8 @@
 from typing import Dict, Any
 
 # @see https://stackoverflow.com/questions/20656135/python-deep-merge-dictionary-data
+
+
 def tree_merge(source: Dict[str, Any], destination: Dict[str, Any]):
     """
     Deep merge source into destination
@@ -24,6 +26,7 @@ def tree_merge(source: Dict[str, Any], destination: Dict[str, Any]):
             destination[key] = value
 
     return destination
+
 
 def tree_get(node: Dict, key: str):
     """ if key is a "." (dot) delimited path down the Dict as a tree, return the
