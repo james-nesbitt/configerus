@@ -8,106 +8,110 @@ substitution of whole and partial values works.
 """
 import logging
 import unittest
+import os.path
+import json
 
 import configerus
+from configerus.config import CONFIG_PATH_LABEL
+from configerus.loaded import LOADED_KEY_ROOT
 from configerus.contrib.dict import PLUGIN_ID_SOURCE_DICT
 from configerus.contrib.files import PLUGIN_ID_SOURCE_PATH
 
 from configerus.test import make_test_config, test_config_cleanup
 
-logger = logging.getLogger("test_config_behaviour")
+logger = logging.getLogger('test_config_behaviour')
 logger.setLevel(logging.INFO)
 
 config_sources = [
     {
-        "name": "source",
-        "priority": 30,
-        "type": PLUGIN_ID_SOURCE_DICT,
-        "data": {
-            "config": {
-                "1": "first 1",
-                "2": {
-                    "1": "first 2.1"
+        'name': 'source',
+        'priority': 30,
+        'type': PLUGIN_ID_SOURCE_DICT,
+        'data': {
+            'config': {
+                '1': "first 1",
+                '2': {
+                    '1': "first 2.1"
                 },
-                "3": {
-                    "1": {
-                        "1": "first 3.1.1",
-                        "2": "first 3.1.2"
+                '3': {
+                    '1': {
+                        '1': "first 3.1.1",
+                        '2': "first 3.1.2"
                     },
-                    "2": {
-                        "1": "first 3.2.1",
-                        "2": "first 3.2.2"
+                    '2': {
+                        '1': "first 3.2.1",
+                        '2': "first 3.2.2"
                     }
                 }
             },
-            "variables": {
-                "one": "first one",
-                "two": "first two",
-                "three": 3,
-                "four": {
-                    "1": "first four.1"
+            'variables': {
+                'one': "first one",
+                'two': "first two",
+                'three': 3,
+                'four': {
+                    '1': "first four.1"
                 }
             }
         }
     },
     {
-        "name": "simple",
-        "priority": 80,
-        "type": PLUGIN_ID_SOURCE_DICT,
-        "data": {
-            "config": {
-                "10": "{2}",
-                "11": "__{2}__"
+        'name': 'simple',
+        'priority': 80,
+        'type': PLUGIN_ID_SOURCE_DICT,
+        'data': {
+            'config': {
+                '10': "{2}",
+                '11': "__{2}__"
             }
         }
     },
     {
-        "name": "defaults",
-        "priority": 80,
-        "type": PLUGIN_ID_SOURCE_DICT,
-        "data": {
-            "config": {
-                "20": "{does.not.exist?default}",
-                "21": "{does.not.exist}",
-                "22": "{variables:does.not.exist?megadefault}",
-                "23": "{variables:three?default}",
+        'name': 'defaults',
+        'priority': 80,
+        'type': PLUGIN_ID_SOURCE_DICT,
+        'data': {
+            'config': {
+                '20': "{does.not.exist?default}",
+                '21': "{does.not.exist}",
+                '22': "{variables:does.not.exist?megadefault}",
+                '23': "{variables:three?default}",
             }
         }
     },
     {
-        "name": "special",
-        "priority": 80,
-        "type": PLUGIN_ID_SOURCE_DICT,
-        "data": {
-            "config": {
-                "30": "{path:replace}",
+        'name': 'special',
+        'priority': 80,
+        'type': PLUGIN_ID_SOURCE_DICT,
+        'data': {
+            'config': {
+                '30': "{path:replace}",
             }
         }
     },
     {
-        "name": "deep",
-        "priority": 80,
-        "type": PLUGIN_ID_SOURCE_DICT,
-        "data": {
-            "config": {
-                "40": "deep 40",
-                "41": "{40}",
-                "42": {
-                    "1": "{40}",
-                    "2": {
-                        "1": "{40}"
+        'name': 'deep',
+        'priority': 80,
+        'type': PLUGIN_ID_SOURCE_DICT,
+        'data': {
+            'config': {
+                '40': "deep 40",
+                '41': "{40}",
+                '42': {
+                    '1': "{40}",
+                    '2': {
+                        '1': "{40}"
                     }
                 }
             }
         }
     },
     {
-        "name": "replace",
-        "priority": 80,
-        "type": PLUGIN_ID_SOURCE_PATH,
-        "data": {
-            "replace.json": {
-                "id": "test"
+        'name': 'replace',
+        'priority': 80,
+        'type': PLUGIN_ID_SOURCE_PATH,
+        'data': {
+            'replace.json': {
+                'id': "test"
             }
         }
     }
@@ -136,8 +140,8 @@ class ConfigTemplating(unittest.TestCase):
         make_test_config(config, config_sources)
         cls.config = config
 
-        cls.loaded_config = config.load("config")
-        cls.loaded_variables = config.load("variables")
+        cls.loaded_config = config.load('config')
+        cls.loaded_variables = config.load('variables')
 
     @classmethod
     def tearDownClass(cls):
@@ -170,7 +174,7 @@ class ConfigTemplating(unittest.TestCase):
         self.assertEqual(self.config.format('1 23 45 {1}6 78 90', 'config'), "1 23 45 first 16 78 90")
         """ format replacements in the middle of a string """
 
-        self.assertEqual(self.config.format('{2}', 'config'), {"1": "first 2.1"})
+        self.assertEqual(self.config.format('{2}', 'config'), {'1': "first 2.1"})
         self.assertEqual(self.config.format(' {2} ', 'config'), " {'1': 'first 2.1'} ")
         """ format should string cast only not full matches """
 
@@ -198,32 +202,57 @@ class ConfigTemplating(unittest.TestCase):
     def test_get_formatted(self):
         """ test that loadedconfig gets format """
 
-        config_one = self.loaded_config.get("1")
+        config_one = self.loaded_config.get('1')
         self.assertEqual(config_one, "first 1")
         self.assertEqual(self.config.format('{1}', 'config'), config_one)
         """ get should mimic format behaviour, which we tested above """
 
-        variables_three = self.loaded_variables.get("three")
+        variables_three = self.loaded_variables.get('three')
         self.assertEqual(variables_three, 3)
         self.assertEqual(self.loaded_config.format("{variables:three}"), variables_three)
         self.assertEqual(self.loaded_config.format(" {variables:three} "), " {} ".format(variables_three))
         """ test templating for different sources """
 
-        self.assertEqual(self.loaded_config.get("20"), 'default')
-        self.assertEqual(self.loaded_config.get("22"), 'megadefault')
-        self.assertEqual(self.loaded_config.get("23"), variables_three)
+        self.assertEqual(self.loaded_config.get('20'), "default")
+        self.assertEqual(self.loaded_config.get('22'), "megadefault")
+        self.assertEqual(self.loaded_config.get('23'), variables_three)
         """ test the templateing on get() """
 
         with self.assertRaises(Exception):
-            self.loaded_config.get("21")
+            self.loaded_config.get('21')
             """ test template fails on missing keys in get """
 
     def test_deep_formatting(self):
         """ test that formatting is applied deeply """
 
-        config_fourty = self.loaded_config.get("40")
+        config_fourty = self.loaded_config.get('40')
         self.assertEqual(config_fourty, "deep 40")
 
-        self.assertEqual(self.loaded_config.get("41"), config_fourty)
-        self.assertEqual(self.loaded_config.get("42")["1"], config_fourty)
-        self.assertEqual(self.loaded_config.get("42")["2"]["1"], config_fourty)
+        self.assertEqual(self.loaded_config.get('41'), config_fourty)
+        self.assertEqual(self.loaded_config.get('42')['1'], config_fourty)
+        self.assertEqual(self.loaded_config.get('42')['2']['1'], config_fourty)
+
+    def test_file_templating(self):
+        """ test that file contents can be used as a formatting target """
+
+        replace_config = self.config.load('replace')
+        replace_json = replace_config.get(LOADED_KEY_ROOT)
+
+        self.assertIsNotNone(replace_json)
+
+        replace_path = replace_config.format('{paths:replace}')
+        self.assertIsNotNone(replace_path)
+
+        replace_full_path = os.path.join(replace_path, 'replace.json')
+        with open(replace_full_path) as f:
+            replace_json = json.load(f)
+        self.assertIsNotNone(replace_json)
+
+        # confirm that a file replace full match works
+        self.assertEqual(replace_json, replace_config.format('[file:' + replace_full_path + ']'))
+        self.assertEqual(
+            ' {} '.format(
+                json.dumps(replace_json)), replace_config.format(
+                ' [file:' + replace_full_path + '] '))
+        # confirm mixed templating
+        self.assertEqual(replace_json, replace_config.format('[file:{paths:replace}/replace.json]'))

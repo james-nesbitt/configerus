@@ -3,11 +3,14 @@ import os.path
 import re
 import yaml
 import json
+import logging
 
 from configerus.config import Config
 
-FILES_FORMAT_MATCH_PATTERN = r'(\[(file\:)(?P<file>(~\\)?[\w\\]*(\.[\w]*))\])'
+FILES_FORMAT_MATCH_PATTERN = r'(\[(file\:)(?P<file>(\~?\/?\w+\/)*\w*(\.\w+)?)\])'
 """ A regex pattern to identify files that should be embedded """
+
+logger = logging.getLogger('configerus.contrib.files:format')
 
 
 class ConfigFormatFilePlugin:
@@ -33,7 +36,6 @@ class ConfigFormatFilePlugin:
             then this is used as a source.
 
         """
-
         if not isinstance(target, str):
             return target
 
@@ -83,7 +85,7 @@ class ConfigFormatFilePlugin:
 
         """
         file = match.group('file')
-        ext = os.path.splitext(file).lower()
+        extension = os.path.splitext(file)[1].lower()
 
         try:
             with open(file) as file_o:
@@ -98,8 +100,6 @@ class ConfigFormatFilePlugin:
                                 "Failed to parse one of the config files '{}': {}".format(
                                     os.path.join(
                                         self.path, file), e))
-
-                        assert file_config, "Empty config in {} from file {}".format(path, file)
                         return data
 
                     elif extension == ".yml" or extension == ".yaml":
@@ -110,12 +110,10 @@ class ConfigFormatFilePlugin:
                                 "Failed to parse one of the config files '{}': {}".format(
                                     os.path.join(
                                         self.path, file), e))
-
-                        assert file_config, "Empty config in {} [{}]".format(file, self.path)
                         return data
 
                 # return file contents as a string (above parsing didn't happen)
-                return file.read()
+                return file_o.read()
 
-        except FileNotFound as e:
+        except FileNotFoundError as e:
             raise KeyError("Could not embed file as config as file could not be found: {}".format(file))

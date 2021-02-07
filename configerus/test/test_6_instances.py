@@ -74,7 +74,7 @@ class ConfigTemplating(unittest.TestCase):
             plugin=DummyPlugin(config, 'dummy')
         )
 
-        self.assertEqual(instance.plugin_id,'dummy')
+        self.assertEqual(instance.plugin_id, 'dummy')
         self.assertEqual(instance.priority, 60)
 
     def test_instances_sanity(self):
@@ -165,7 +165,7 @@ class ConfigTemplating(unittest.TestCase):
         instances.add_plugin(Type.SOURCE, 'dummy_1', 'instance_{}'.format(90), 90)
         instance_list = instances.get_instances(type=Type.SOURCE)
 
-        self.assertEqual(len(instance_list), len(starting_range)+1)
+        self.assertEqual(len(instance_list), len(starting_range) + 1)
         self.assertEqual(instance_list[0].priority, 90)
         self.assertEqual(instance_list[1].priority, 70)
         self.assertEqual(instance_list[len(starting_range)].priority, 30)

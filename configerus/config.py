@@ -29,6 +29,7 @@ General approach:
 
 """
 
+
 class Config:
     """ Config management class (v3)
 

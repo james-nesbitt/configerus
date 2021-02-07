@@ -7,7 +7,8 @@ logger = logging.getLogger('configerus')
 
 CONFIGERUS_BOOSTRAP_DEFAULT = [
     'deep',
-    'get'
+    'get',
+    'files'
 ]
 """ Default list of modules to bootstrap for a new config object """
 
