@@ -48,7 +48,7 @@ class Loaded:
         """
         self.data = data
 
-    def get(self, key: str, format: bool = True, exception_if_missing: bool = False, validator: str = ""):
+    def get(self, key: str, base: str = LOADED_KEY_ROOT, format: bool = True, exception_if_missing: bool = False, validator: str = ""):
         """ get a key value from the active label
 
         Here you can use "." (dot) notation to indicated a path down the config
@@ -62,6 +62,11 @@ class Loaded:
         Parameters:
 
         key (str): the dot notation key that should match a value in Dict
+
+        base (str) : an optional base to the key, which makes the key a path
+            bavigation from the base.  This allows some interesting patterns
+            where sub-paths are retrieved from a starting point, so the root
+            path can be kept separately from the component path.
 
         format (bool): should retrieved string values be checked for variable
            substitution?  If so then the str value is checked using regex for
@@ -85,9 +90,15 @@ class Loaded:
         """
         value = ""
 
+        # prepend the base if it was passed
+        if base and not base == LOADED_KEY_ROOT:
+            if not key or key == LOADED_KEY_ROOT:
+                key = base
+            else:
+                key = '{}.{}'.format(base, key)
+
         if key == LOADED_KEY_ROOT:
             value = self.data
-
         else:
             try:
                 value = tree_get(self.data, key)

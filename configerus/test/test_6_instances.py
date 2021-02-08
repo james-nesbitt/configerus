@@ -11,7 +11,6 @@ from configerus.plugin import SourceFactory, FormatFactory, ValidatorFactory, Ty
 from configerus.instances import PluginInstance, PluginInstances
 
 logger = logging.getLogger("test_instances")
-logger.setLevel(logging.INFO)
 
 """ register a bunch of dummy plugins which do nothing but can be used for testing """
 
