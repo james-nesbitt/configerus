@@ -97,13 +97,13 @@ class PluginInstances:
         Parameters:
         -----------
 
+        type (str) : plugin type as a string (used for filtering)
+
         plugin_id (str) : id of the plugin as registered using the plugin
             factory decorater. This has to match a plugin's registration with
 
         instance_id (str) : Optionally give a plugin instance a name, which it
             might use for internal functionality.
-            The "path" source plugin allows string template substitution of the
-            "__paths__:instance_id" for the path.
 
         priority (int) : plugin priority. Use this to set this plugins as
             higher or lower priority than others.

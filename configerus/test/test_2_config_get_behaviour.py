@@ -16,6 +16,7 @@ import logging
 import unittest
 
 import configerus
+from configerus.loaded import LOADED_KEY_ROOT
 from configerus.contrib.dict import PLUGIN_ID_SOURCE_DICT
 from configerus.contrib.files import PLUGIN_ID_SOURCE_PATH
 
@@ -26,95 +27,99 @@ logger.setLevel(logging.INFO)
 
 config_sources = [
     {
-        "name": "first",
-        "priority": 30,
-        "type": PLUGIN_ID_SOURCE_DICT,
-        "data": {
-            "config": {
-                "1": "first 1"
+        'name': 'first',
+        'priority': 30,
+        'type': PLUGIN_ID_SOURCE_DICT,
+        'data': {
+            'config': {
+                '1': "first 1"
             },
-            "variables": {
-                "one": "first one",
-                "two": "first two"
+            'variables': {
+                'one': "first one",
+                'two': "first two"
             }
         }
     },
     {
-        "name": "second",
-        "priority": 20,
-        "type": PLUGIN_ID_SOURCE_PATH,
-        "data": {
-            "config.json": {
-                "1": "second 1",
-                "2": "second 2"
+        'name': 'second',
+        'priority': 20,
+        'type': PLUGIN_ID_SOURCE_PATH,
+        'data': {
+            'config.json': {
+                '1': "second 1",
+                '2': "second 2"
             },
-            "variables.json": {
-                "one": "second one",
-                "two": "second two"
+            'variables.json': {
+                'one': "second one",
+                'two': "second two"
             }
         }
     },
     {
-        "name": "third",
-        "priority": 40,
-        "type": PLUGIN_ID_SOURCE_PATH,
-        "data": {
-            "config.yaml": {
-                "3": {
-                    "1": "third 3.1"
+        'name': 'third',
+        'priority': 40,
+        'type': PLUGIN_ID_SOURCE_PATH,
+        'data': {
+            'config.yaml': {
+                '3': {
+                    '1': "third 3.1",
+                    '2': {
+                        '1': "third 3.2.1",
+                        '2': "third 3.2.2"
+                    }
                 },
-                "4": {
-                    "1": "third 4.1"
+                '4': {
+                    '1': "third 4.1"
                 },
-                "5": "third 5"
+                '5': "third 5"
             }
         }
     },
     {
-        "name": "fourth",
-        "priority": 75,
-        "type": PLUGIN_ID_SOURCE_PATH,
-        "data": {
-            "config.json": {
-                "4": "fourth 4"
+        'name': 'fourth',
+        'priority': 75,
+        'type': PLUGIN_ID_SOURCE_PATH,
+        'data': {
+            'config.json': {
+                '4': "fourth 4"
             }
         }
     },
     {
-        "name": "fifth",
-        "priority": 75,
-        "type": PLUGIN_ID_SOURCE_PATH,
-        "data": {
-            "config.json": {
-                "5": "fifth 5",
-                "6": "fifth 6"
+        'name': 'fifth',
+        'priority': 75,
+        'type': PLUGIN_ID_SOURCE_PATH,
+        'data': {
+            'config.json': {
+                '5': "fifth 5",
+                '6': "fifth 6"
             }
         }
     },
     {
-        "name": "sixth",
-        "priority": 75,
-        "type": PLUGIN_ID_SOURCE_PATH,
-        "data": {
-            "config.json": {
-                "6": {
-                    "1": "sixth 6.1"
+        'name': 'sixth',
+        'priority': 75,
+        'type': PLUGIN_ID_SOURCE_PATH,
+        'data': {
+            'config.json': {
+                '6': {
+                    '1': "sixth 6.1"
                 }
             }
         }
     },
     {
-        "name": "seventh",
-        "priority": 85,
-        "type": PLUGIN_ID_SOURCE_PATH,
-        "data": {
-            "config.json": {
-                "5": "seventh 5 json",
-                "6": "seventh 6 json"
+        'name': 'seventh',
+        'priority': 85,
+        'type': PLUGIN_ID_SOURCE_PATH,
+        'data': {
+            'config.json': {
+                '5': "seventh 5 json",
+                '6': "seventh 6 json"
             },
-            "config.yaml": {
-                "5": "seventh 5 yaml",
-                "6": "seventh 6 yaml"
+            'config.yaml': {
+                '5': "seventh 5 yaml",
+                '6': "seventh 6 yaml"
             }
         }
     }
@@ -166,3 +171,30 @@ class ConfigBehaviour(unittest.TestCase):
         self.assertEqual(self.loaded_config.get("4"), "fourth 4")
         self.assertIsNone(self.loaded_config.get("5.1", exception_if_missing=False))
         self.assertEqual(self.loaded_config.get("5"), "seventh 5 json")
+
+    def test_get_base(self):
+        """ test the the loaded config base value functions """
+
+        third_3_base = self.loaded_config.get('3')
+        third_3_2 = self.loaded_config.get('3.2')
+        third_3_2_1 = self.loaded_config.get('3.2.1')
+
+        # sanity check on the comparison values
+        self.assertIsNotNone(third_3_base)
+        self.assertIsInstance(third_3_base, dict)
+        self.assertIsInstance(third_3_2, dict)
+        self.assertEqual(third_3_2_1, "third 3.2.1")
+
+        # pull some values with a base
+        third_3_base_2 = self.loaded_config.get('2', base='3')
+        third_3_base_2_1 = self.loaded_config.get('2.1', base='3')
+
+        self.assertEqual(third_3_2, third_3_base_2)
+        self.assertEqual(third_3_2_1, third_3_base_2_1)
+
+        # Load with some root keys involved
+        third_root_base_3 = self.loaded_config.get('3', base=LOADED_KEY_ROOT)
+        third_3_base_root = self.loaded_config.get(LOADED_KEY_ROOT, base='3')
+
+        self.assertEqual(third_3_base, third_root_base_3)
+        self.assertEqual(third_3_base, third_3_base_root)

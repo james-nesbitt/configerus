@@ -6,6 +6,7 @@ from .plugin import Factory, Type
 from .instances import PluginInstances
 from .shared import tree_merge
 from .loaded import Loaded
+from .validator import ValidationError
 
 logger = logging.getLogger('configerus:config')
 
@@ -327,6 +328,23 @@ class Config:
 
         validate_target : A config key which can be used
 
+        Returns:
+        --------
+
+        Bool results of validation. If any validation plugin raises an exception
+        then it will be false.
+
+        If exception_if_invalid then validation failures with raise and exception
+
+        Raises:
+        -------
+
+        ValidationError on any validation exception.
+
+        ValdiationError if any validator ran into an exception internally.
+
+        @TODO can we be more specific in interpreting validation exceptions.
+
         """
 
         try:
@@ -334,4 +352,6 @@ class Config:
                 validator.validate(validate_target, data)
         except Exception as e:
             if exception_if_invalid:
-                raise e
+                raise ValidationError("Config validation failed: {}".format(e)) from e
+            return False
+        return True
