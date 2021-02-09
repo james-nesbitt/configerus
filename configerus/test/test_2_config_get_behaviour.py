@@ -147,8 +147,8 @@ class ConfigBehaviour(unittest.TestCase):
         config = configerus.new_config()
         make_test_config(config, config_sources)
         cls.config = config
-        cls.loaded_config = config.load("config")
-        cls.loaded_variables = config.load("variables")
+        cls.loaded_config = config.load('config')
+        cls.loaded_variables = config.load('variables')
 
     @classmethod
     def tearDownClass(cls):
@@ -157,20 +157,20 @@ class ConfigBehaviour(unittest.TestCase):
     def test_basic_combined(self):
         """ test some basic file combining by the config object """
 
-        self.assertEqual(self.loaded_config.get("1"), "first 1")
-        self.assertEqual(self.loaded_config.get("2"), "second 2")
+        self.assertEqual(self.loaded_config.get('1'), "first 1")
+        self.assertEqual(self.loaded_config.get('2'), "second 2")
 
     def test_dot_notation(self):
         """ Confirm that we can retrieve data using the dot notation """
 
-        self.assertEqual(self.loaded_config.get("3.1"), "third 3.1")
+        self.assertEqual(self.loaded_config.get('3.1'), "third 3.1")
 
     def test_overrides(self):
         """ confirm that keys defined in more than one source get overriden """
 
-        self.assertEqual(self.loaded_config.get("4"), "fourth 4")
-        self.assertIsNone(self.loaded_config.get("5.1", exception_if_missing=False))
-        self.assertEqual(self.loaded_config.get("5"), "seventh 5 json")
+        self.assertEqual(self.loaded_config.get('4'), "fourth 4")
+        self.assertIsNone(self.loaded_config.get('5.1', exception_if_missing=False))
+        self.assertEqual(self.loaded_config.get('5'), "seventh 5 json")
 
     def test_get_multiple_keys(self):
         """ test the the loaded config base value functions """
@@ -186,11 +186,15 @@ class ConfigBehaviour(unittest.TestCase):
         self.assertEqual(third_3_2_1, "third 3.2.1")
 
         # pull some values with a base
-        third_3_base_2 = self.loaded_config.get(['3', '2'])
-        third_3_base_2_1 = self.loaded_config.get(['3', '2.1'])
+        third_3_base_A = self.loaded_config.get(['3', '2'])
+        third_3_base_B = self.loaded_config.get(['3', '2.1'])
+        third_3_base_C = self.loaded_config.get(['3', ['2', '1']])
+        third_3_base_D = self.loaded_config.get([['3', '2'], '1'])
 
-        self.assertEqual(third_3_2, third_3_base_2)
-        self.assertEqual(third_3_2_1, third_3_base_2_1)
+        self.assertEqual(third_3_2, third_3_base_A)
+        self.assertEqual(third_3_2_1, third_3_base_B)
+        self.assertEqual(third_3_2_1, third_3_base_C)
+        self.assertEqual(third_3_2_1, third_3_base_D)
 
         # Load with some root keys involved
         third_root_base_3 = self.loaded_config.get([LOADED_KEY_ROOT, '3'])

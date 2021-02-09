@@ -1,5 +1,5 @@
 
-from typing import Dict, Any
+from typing import Dict, Any, List
 
 # @see https://stackoverflow.com/questions/20656135/python-deep-merge-dictionary-data
 
@@ -44,3 +44,21 @@ def tree_get(node: Dict, key: str):
             raise KeyError("Key {} not found in loaded config data. '{}'' was not found".format(key, step))
 
     return node
+
+
+def tree_reduce(src: dict, glue: str = '.', ignore: List[Any] = []):
+    """ merge a nested tree of strings down to a single string with a passed glue """
+
+    # don't use the iterator solution with strings
+    if isinstance(src, str):
+        return src if src not in ignore else ''
+
+    assemble = []
+    for src_part in src:
+        scr_part = tree_reduce(src_part, glue=glue, ignore=ignore)
+        if src_part and src_part not in ignore:
+            assemble.append(scr_part)
+    try:
+        return glue.join(assemble)
+    except UnicodeError as e:
+        raise ValueError("tree_reduce could not reduce your list: {}".format(listassemble)) from e
