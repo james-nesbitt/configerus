@@ -172,7 +172,7 @@ class ConfigBehaviour(unittest.TestCase):
         self.assertIsNone(self.loaded_config.get("5.1", exception_if_missing=False))
         self.assertEqual(self.loaded_config.get("5"), "seventh 5 json")
 
-    def test_get_base(self):
+    def test_get_multiple_keys(self):
         """ test the the loaded config base value functions """
 
         third_3_base = self.loaded_config.get('3')
@@ -186,15 +186,15 @@ class ConfigBehaviour(unittest.TestCase):
         self.assertEqual(third_3_2_1, "third 3.2.1")
 
         # pull some values with a base
-        third_3_base_2 = self.loaded_config.get('2', base='3')
-        third_3_base_2_1 = self.loaded_config.get('2.1', base='3')
+        third_3_base_2 = self.loaded_config.get(['3', '2'])
+        third_3_base_2_1 = self.loaded_config.get(['3', '2.1'])
 
         self.assertEqual(third_3_2, third_3_base_2)
         self.assertEqual(third_3_2_1, third_3_base_2_1)
 
         # Load with some root keys involved
-        third_root_base_3 = self.loaded_config.get('3', base=LOADED_KEY_ROOT)
-        third_3_base_root = self.loaded_config.get(LOADED_KEY_ROOT, base='3')
+        third_root_base_3 = self.loaded_config.get([LOADED_KEY_ROOT, '3'])
+        third_3_base_root = self.loaded_config.get([LOADED_KEY_ROOT, '3'])
 
         self.assertEqual(third_3_base, third_root_base_3)
         self.assertEqual(third_3_base, third_3_base_root)
