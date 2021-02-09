@@ -1,5 +1,5 @@
 import logging
-
+from typing import Any
 from .shared import tree_get
 
 logger = logging.getLogger('configerus:loaded')
@@ -39,16 +39,20 @@ class Loaded:
         self.instance_id = instance_id
 
     def _reload(self, data):
-        """ Allow new data to be passed in
+        """ Force new data to be used
 
-        this is meant to be used by the core only, and is used to update config
+        This is meant to be used by the parent only, and is used to update config
         when new config paths are added, typically by boostrapping.
 
-        Hopeully this is done before the config is really used
+        Hopeully this is done before the config is really used.
+
+        @TODO signal on this?
+
         """
         self.data = data
 
-    def get(self, key: str, base: str = LOADED_KEY_ROOT, format: bool = True, exception_if_missing: bool = False, validator: str = ""):
+    def get(self, key: Any = LOADED_KEY_ROOT, format: bool = True,
+            exception_if_missing: bool = False, validator: str = ""):
         """ get a key value from the active label
 
         Here you can use "." (dot) notation to indicated a path down the config
@@ -61,17 +65,20 @@ class Loaded:
 
         Parameters:
 
-        key (str): the dot notation key that should match a value in Dict
+        key (Varies) : specify the key path down the loaded config data .dict to
+            retrieve.
+            If empty (LOADED_KEY_ROOT) then the entire .data dict is returned
+            If List[str] then then list is concatenated into a single dot
+            notation string, ignoring any empty (LOADED_KEY_ROOT) values to
+            create a single "dot notation" paths string.
 
-        base (str) : an optional base to the key, which makes the key a path
-            bavigation from the base.  This allows some interesting patterns
-            where sub-paths are retrieved from a starting point, so the root
-            path can be kept separately from the component path.
+            The string is then exploded on "." where each value must correlate
+            to a descending dict key, until we reach a value.
 
         format (bool): should retrieved string values be checked for variable
            substitution?  If so then the str value is checked using regex for
            things that should be replaced with other config values.
-           @see self.format_string()
+           @see self.format_string().)
 
         validator (str) : string key passed to the validate() method which will
             validate the retrieved data before returning it.
@@ -81,34 +88,41 @@ class Loaded:
         (Any) anything in the Dict is a valid return.  The return could be a
             Dict with child elements, an array or any other primitive.
             If the return is a string then it is formatted for variable
-            substitution (see self.format_string())
+            substitution (see self.format_string().)
 
         Throws:
 
         Can throw a KeyError if the key cannot be found (which also occurs if
-        all sources produced no data)
+        all sources produced no data and a non-empty key was passed.)
+
         """
         value = ""
 
-        # prepend the base if it was passed
-        if base and not base == LOADED_KEY_ROOT:
-            if not key or key == LOADED_KEY_ROOT:
-                key = base
-            else:
-                key = '{}.{}'.format(base, key)
-
-        if key == LOADED_KEY_ROOT:
+        if key is None or key == '' or key == LOADED_KEY_ROOT:
             value = self.data
+
         else:
+            # check if key is an iterable of strings
             try:
-                value = tree_get(self.data, key)
-            except KeyError as e:
-                if exception_if_missing:
-                    # hand off the exception
-                    raise e
-                else:
-                    logger.debug("Failed to find config key : %s", key)
-                    return None
+                if isinstance(key, list):
+                    keys = '.'.join([key_part for key_part in key if not (
+                        key_part == '' or key_part == LOADED_KEY_ROOT)])
+                    key = keys
+            except TypeError as e:
+                raise e
+
+            if key == '' or key == LOADED_KEY_ROOT:
+                value = self.data
+            else:
+                try:
+                    value = tree_get(self.data, key)
+                except KeyError as e:
+                    if exception_if_missing:
+                        # hand off the exception
+                        raise e
+                    else:
+                        logger.debug("Failed to find config key : %s", key)
+                        return None
 
         # try to format any string values
         value = self.format(value)
