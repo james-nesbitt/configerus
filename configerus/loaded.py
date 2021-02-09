@@ -4,7 +4,7 @@ from .shared import tree_get
 
 logger = logging.getLogger('configerus:loaded')
 
-LOADED_KEY_ROOT = '.'
+LOADED_KEY_ROOT = ''
 """ If this key is requested in .get() then the root data dict is returned """
 
 
