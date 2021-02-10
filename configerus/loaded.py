@@ -53,27 +53,47 @@ class Loaded:
 
     def get(self, key: Any = LOADED_KEY_ROOT, format: bool = True,
             exception_if_missing: bool = False, validator: str = ""):
-        """ get a key value from the active label
+        """ get a key value from the loaded config
 
-        Here you can use "." (dot) notation to indicated a path down the config
-        tree.
-        so "one.two.three" should match the descending path:
-
-        one
-        --two
-            --three
+        using a key, traverse a tree of data and return the value, optionally
+        formatted, optionally validated.
 
         Parameters:
 
-        key (Varies) : specify the key path down the loaded config data .dict to
-            retrieve.
-            If empty (LOADED_KEY_ROOT) then the entire .data dict is returned
-            If List[str] then then list is concatenated into a single dot
-            notation string, ignoring any empty (LOADED_KEY_ROOT) values to
-            create a single "dot notation" paths string.
+        key (Varies) : specify the key path down the loaded config data dict.
 
-            The string is then exploded on "." where each value must correlate
-            to a descending dict key, until we reach a value.
+            This is a very forgiving and adaptive parameter.  You have can pass:
+
+            '1.2.3.4' : "dot" notation which means the steps down the tree are
+                1, 2, 3 then 4.
+
+            ['1', '2', '3', '4'] : asks for the same '1.2.3.4' path as above.
+
+            if the loaded data was:
+            ```
+                {
+                    '1': {
+                        '2': {
+                            '3': {
+                                '4': 'my value'
+                            }
+                        }
+                    }
+                }
+            ```
+            Then the returned value would be 'my value'
+
+            You can also mix and match with out worrying about clean formatting:
+
+            ['1.2', '3.4']
+            ['1.2.3.4', '', '.']
+            ['1', ['2', '3.4']]
+            ['1', '2', '3.', '.4']
+
+            (all are equivalent to '1.2.3.4')
+
+            this allows you to pass around keys and append to them on the fly
+            without having to be overly concerned about clean formatting.
 
         format (bool): should retrieved string values be checked for variable
            substitution?  If so then the str value is checked using regex for
@@ -102,22 +122,16 @@ class Loaded:
         """
         value = ""
 
-        # merge any nested dict of keys down to a single '.' string
-        key = tree_reduce(key, '.', ignore=[LOADED_KEY_ROOT, ''])
+        try:
+            value = tree_get(self.data, key, ignore=['', LOADED_KEY_ROOT])
 
-        if key == '' or key == LOADED_KEY_ROOT:
-            value = self.data
-        else:
-            try:
-                value = tree_get(self.data, key)
-
-            except KeyError as e:
-                if exception_if_missing:
-                    # hand off the exception
-                    raise e
-                else:
-                    logger.debug("Failed to find config key : %s", key)
-                    value = None
+        except KeyError as e:
+            if exception_if_missing:
+                # hand off the exception
+                raise e
+            else:
+                logger.debug("Failed to find config key : %s", key)
+                value = None
 
         if value is not None:
             # try to format any values

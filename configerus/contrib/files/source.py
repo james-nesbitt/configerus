@@ -2,9 +2,12 @@ import os
 import re
 import json
 import yaml
+import logging
 
 from configerus.config import Config
 from configerus.shared import tree_merge
+
+logger = logging.getLogger('configerus.contrib.source')
 
 # FileTypes that this class can use at this time
 FILESOURCE_FILETYPES = ["json", "yaml", "yml"]
@@ -78,7 +81,6 @@ class ConfigSourcePathPlugin:
                                     self.path, file), e))
 
                     assert file_config, "Empty config in {} from file {}".format(path, file)
-                    data = tree_merge(file_config, data)
                 elif extension == ".yml" or extension == ".yaml":
                     try:
                         file_config = yaml.load(matching_file, Loader=yaml.FullLoader)
@@ -89,10 +91,11 @@ class ConfigSourcePathPlugin:
                                     self.path, file), e))
 
                     assert file_config, "Empty config in {} [{}]".format(file, self.path)
-                    data = tree_merge(file_config, data)
 
                 else:
                     raise ValueError(
                         "Unknown config filetype. Cannot parse '{}' files, but it matches our regex".format(extension))
+
+                data = tree_merge(file_config, data)
 
         return data

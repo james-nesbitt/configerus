@@ -1,10 +1,12 @@
-
+import logging
 from typing import Dict, Any, List
+
+logger = logging.getLogger('configerus.shared')
 
 # @see https://stackoverflow.com/questions/20656135/python-deep-merge-dictionary-data
 
 
-def tree_merge(source: Dict[str, Any], destination: Dict[str, Any]):
+def tree_merge(source: Any, destination: Any):
     """
     Deep merge source into destination
 
@@ -14,51 +16,85 @@ def tree_merge(source: Dict[str, Any], destination: Dict[str, Any]):
     True
     """
 
-    assert isinstance(source, dict), "Can't merge a non-dict Source: {}".format(source)
-    assert isinstance(destination, dict), "Can't merge a non-dict Destination: {}".format(destination)
+    if not (isinstance(source, dict) and isinstance(destination, dict)):
+        return source
 
     for key, value in source.items():
-        if isinstance(value, dict):
-            # get node or create one
-            node = destination.setdefault(key, {})
-            tree_merge(value, node)
-        else:
-            destination[key] = value
+        if isinstance(value, dict) and key in destination:
+            value = tree_merge(value, destination[key])
+        destination[key] = value
 
     return destination
 
 
-def tree_get(node: Dict, key: str):
-    """ if key is a "." (dot) delimited path down the Dict as a tree, return the
-    matching value, or throw a KeyError if it isn't found """
-
-    assert key != "", "Must pass a non-empty string key in dot notation"
+def tree_get(node: Dict, keys: List[str], glue: str = '.', ignore: List[str] = []) -> Any:
+    """ Find a path down a tree using the keys as a step by step path """
 
     if not node:
         raise ValueError("There was no data in the config so no key match could be made")
 
-    for step in key.split('.'):
-        if step in node:
-            node = node[step]
-        else:
-            raise KeyError("Key {} not found in loaded config data. '{}'' was not found".format(key, step))
+    flat_steps = tree_reduce(tree=keys, glue=glue, ignore=ignore)
+    if len(flat_steps) == 0:
+        return node
+
+    for step in flat_steps:
+        try:
+            if isinstance(node, str):
+                raise KeyError("Path tried to descend into a string: {}".format(node))
+            elif isinstance(node, list) and step.isnumeric():
+                node = node[int(step)]
+            else:
+                # hopefully the target is subscriptable?
+                node = node[step]
+
+        except KeyError as e:
+            raise KeyError("Key {} not found in loaded config data. '{}' was not found".format(keys, step)) from e
+        except IndexError as e:
+            raise IndexError("Array index '{}' was not found in list : {}".format(step, node))
+        except TypeError as e:
+            raise ValueError("Invalid key '{}' in the keys list: '{}' : {}".format(step, node, e)) from e
 
     return node
 
 
-def tree_reduce(src: dict, glue: str = '.', ignore: List[Any] = []):
-    """ merge a nested tree of strings down to a single string with a passed glue """
+def tree_reduce(tree: Any, glue: str = '.', ignore: List[Any] = []) -> List[str]:
+    """ merge a nested tree of strings down to a flat list of strings
+
+    Also split any strings that contain a glue character into a list of strings
+    and flatten them down as well.
+
+    Also ignore certain passed in strings from the list.
+
+    Parameters:
+    -----------
+
+    tree (str | List[str] | List[List[str]] ...) : Any list tree of strings that
+        need to be flattened to a single depth
+
+    glue (str) : if a string is found that has a glue, then it is split along
+        that glue and converted to a List
+
+    ignore (List[str]) : a list of strings that should be considered invalid
+        values that should not be included in the flattenned list
+
+    Returns:
+
+    List[str] tree reduced to a flat (single) depth, potentially empty
+
+    """
 
     # don't use the iterator solution with strings
-    if isinstance(src, str):
-        return src if src not in ignore else ''
+    if isinstance(tree, str):
+        if glue == '':
+            tree = [tree]
+        else:
+            tree = tree.split(glue)
 
-    assemble = []
-    for src_part in src:
-        scr_part = tree_reduce(src_part, glue=glue, ignore=ignore)
-        if src_part and src_part not in ignore:
-            assemble.append(scr_part)
-    try:
-        return glue.join(assemble)
-    except UnicodeError as e:
-        raise ValueError("tree_reduce could not reduce your list: {}".format(listassemble)) from e
+    else:
+        flatter = []
+        for node in tree:
+            flat_node = tree_reduce(node, glue, ignore)
+            flatter += flat_node
+        tree = flatter
+
+    return [node for node in tree if node and node not in ignore]

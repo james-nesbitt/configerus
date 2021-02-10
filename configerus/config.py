@@ -226,6 +226,7 @@ class Config:
         if validator:
             self.validate(self.loaded[label].data, validator)
 
+        logger.debug("Loaded config {} : {}".format(label, self.loaded[label].data))
         return self.loaded[label]
 
     """ Formatter plugin usage and management """
