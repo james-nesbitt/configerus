@@ -198,8 +198,11 @@ class PluginInstances:
         Highest priority matching plugin object
 
         """
-        return self.get_instance(plugin_id=plugin_id, instance_id=instance_id, type=type,
-                                 exception_if_missing=exception_if_missing).plugin
+        instance = self.get_instance(plugin_id=plugin_id, instance_id=instance_id, type=type,
+                                     exception_if_missing=exception_if_missing)
+
+        if instance is not None:
+            return instance.plugin
 
     def get_plugins(self, plugin_id: str = '', instance_id: str = '',
                     type: str = '', exception_if_missing: bool = True) -> object:

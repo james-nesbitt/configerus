@@ -161,12 +161,6 @@ class ConfigTemplating(unittest.TestCase):
         self.assertEqual(self.config.format('{3.2.1}', 'config'), "first 3.2.1")
         """ Simple dot notation descending format """
 
-    def test_missing_raises_exceptions(self):
-        """ missing values should raise exceptions """
-
-        with self.assertRaises(KeyError):
-            self.config.format("{does.not.exist}", 'config')
-
     def test_format_embedding_and_casting(self):
         """ simple template replacing using format """
 
@@ -217,6 +211,17 @@ class ConfigTemplating(unittest.TestCase):
         self.assertEqual(self.loaded_config.get('22'), "megadefault")
         self.assertEqual(self.loaded_config.get('23'), variables_three)
         """ test the templateing on get() """
+
+    def test_missing_raises_exceptions(self):
+        """ missing values should raise exceptions """
+
+        with self.assertRaises(KeyError):
+            self.config.format("{does.not.exist}", 'config')
+            """ test template fails on missing keys in config format """
+
+        with self.assertRaises(Exception):
+            self.loaded_config.format("{does.not.exist}")
+            """ test template fails on missing keys in loaded format """
 
         with self.assertRaises(Exception):
             self.loaded_config.get('21')

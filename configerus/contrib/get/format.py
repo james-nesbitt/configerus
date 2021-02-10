@@ -1,6 +1,9 @@
 import re
+import logging
 
 from configerus.config import Config
+
+logger = logging.getLogger('configerus.contrib.get:formatter')
 
 CONFIG_DEFAULT_MATCH_PATTERN = r'\{((?P<source>\w+):)?(?P<key>[\w.]+)(\?(?P<default>[^\}]+))?\}'
 """ Default regex pattern used to string template, which needs to identify
@@ -71,7 +74,6 @@ class ConfigFormatGetPlugin():
         if source is None:
             source = default_source
         source_config = self.config.load(source)
-
         try:
             return source_config.get(key, exception_if_missing=True)
         except KeyError as e:

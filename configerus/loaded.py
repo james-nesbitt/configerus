@@ -1,6 +1,6 @@
 import logging
 from typing import Any
-from .shared import tree_get
+from .shared import tree_get, tree_reduce
 
 logger = logging.getLogger('configerus:loaded')
 
@@ -80,8 +80,12 @@ class Loaded:
            things that should be replaced with other config values.
            @see self.format_string().)
 
+           Formatting IS NOT APPLIED if the key could not be matched.
+
         validator (str) : string key passed to the validate() method which will
             validate the retrieved data before returning it.
+
+            Validation IS APPLIED if the key could not be matched.
 
         Returns:
 
@@ -98,34 +102,26 @@ class Loaded:
         """
         value = ""
 
-        if key is None or key == '' or key == LOADED_KEY_ROOT:
+        # merge any nested dict of keys down to a single '.' string
+        key = tree_reduce(key, '.', ignore=[LOADED_KEY_ROOT, ''])
+
+        if key == '' or key == LOADED_KEY_ROOT:
             value = self.data
-
         else:
-            # check if key is an iterable of strings
             try:
-                if isinstance(key, list):
-                    keys = '.'.join([key_part for key_part in key if not (
-                        key_part == '' or key_part == LOADED_KEY_ROOT)])
-                    key = keys
-            except TypeError as e:
-                raise e
+                value = tree_get(self.data, key)
 
-            if key == '' or key == LOADED_KEY_ROOT:
-                value = self.data
-            else:
-                try:
-                    value = tree_get(self.data, key)
-                except KeyError as e:
-                    if exception_if_missing:
-                        # hand off the exception
-                        raise e
-                    else:
-                        logger.debug("Failed to find config key : %s", key)
-                        return None
+            except KeyError as e:
+                if exception_if_missing:
+                    # hand off the exception
+                    raise e
+                else:
+                    logger.debug("Failed to find config key : %s", key)
+                    value = None
 
-        # try to format any string values
-        value = self.format(value)
+        if value is not None:
+            # try to format any values
+            value = self.format(value)
 
         if validator:
             self.parent.validate(value, validator)
@@ -135,9 +131,10 @@ class Loaded:
     def format(self, data):
         """ Format some data using the config object formatters
 
+        Parameters:
+
         data (Any): primitive data that should be formatted. The data will be
             passed to the formatter plugins in descending priority order.
-
 
         """
         return self.parent.format(data, self.instance_id)

@@ -13,7 +13,6 @@ import configerus
 from configerus.config import Config
 
 logger = logging.getLogger("basic_construct")
-logger.setLevel(level=logging.INFO)
 
 
 class BasicConstruct(unittest.TestCase):
