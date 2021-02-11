@@ -17,6 +17,7 @@ import unittest
 
 import configerus
 from configerus.loaded import LOADED_KEY_ROOT
+from configerus.contrib.env import PLUGIN_ID_SOURCE_ENV
 from configerus.contrib.dict import PLUGIN_ID_SOURCE_DICT
 from configerus.contrib.files import PLUGIN_ID_SOURCE_PATH
 
@@ -125,6 +126,15 @@ config_sources = [
                 }
             }
         }
+    },
+    {
+        'name': 'eighth',
+        'priority': 85,
+        'type': PLUGIN_ID_SOURCE_ENV,
+        'data': {
+            'env_one': "env eighth env one",
+            'env_two_one': "env eighth env two.one",
+        }
     }
 ]
 """ Contents of test config files used as the source for a config object """
@@ -156,6 +166,13 @@ class ConfigBehaviour(unittest.TestCase):
     @classmethod
     def tearDownClass(cls):
         test_config_cleanup(cls.config)
+
+    def test_source_env_basic(self):
+        """ test the env source basically """
+        all_env = self.config.load('env')
+        self.assertIsNotNone(all_env.get('one'))
+        self.assertEqual(all_env.get('one'), "env eighth env one")
+        self.assertEqual(all_env.get('two.one'), "env eighth env two.one")
 
     def test_basic_combined(self):
         """ test some basic file combining by the config object """
