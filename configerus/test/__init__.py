@@ -7,6 +7,7 @@ import json
 import yaml
 
 from configerus.config import Config
+from configerus.contrib.env import PLUGIN_ID_SOURCE_ENV
 from configerus.contrib.dict import PLUGIN_ID_SOURCE_DICT
 from configerus.contrib.files import PLUGIN_ID_SOURCE_PATH
 
@@ -54,6 +55,15 @@ def make_test_config(config: Config, sources: List):
             # then add the created paths to the config sources
             logger.info("Adding 'path' source '%s' [%s]: %s : %s", name, priority, path, data.keys())
             config.add_source(type, name, priority).set_path(full_path)
+
+        if type == PLUGIN_ID_SOURCE_ENV:
+            # we can do env plugins as well
+            logger.info("Adding 'env' source '%s' [%s]: %s", name, priority, data.keys())
+            for env_key, env_data in data.items():
+                env_name = "{}_{}".format('CONFIGERUSTEST', env_key).upper()
+                logger.info("Adding environment variable : {}".format(env_name))
+                os.environ[env_name] = str(env_data)
+            config.add_source(type, name, priority).set_base('CONFIGERUSTEST')
 
 
 def test_config_cleanup(config: Config):
