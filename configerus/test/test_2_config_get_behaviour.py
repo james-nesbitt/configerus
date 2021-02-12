@@ -119,7 +119,10 @@ config_sources = [
             },
             'config.yaml': {
                 '5': "seventh 5 yaml",
-                '6': "seventh 6 yaml"
+                '6': "seventh 6 yaml",
+                '7': {
+                    '1': ['1']
+                }
             }
         }
     }
@@ -173,7 +176,7 @@ class ConfigBehaviour(unittest.TestCase):
         self.assertEqual(self.loaded_config.get('5'), "seventh 5 json")
 
     def test_get_multiple_keys(self):
-        """ test the the loaded config base value functions """
+        """ test the the loaded get of various key formats """
 
         third_3_base = self.loaded_config.get('3')
         third_3_2 = self.loaded_config.get('3.2')
