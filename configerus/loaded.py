@@ -152,3 +152,31 @@ class Loaded:
 
         """
         return self.parent.format(data, self.instance_id)
+
+    def validate(self, data, validate_target: str, exception_if_invalid: bool = True):
+        """ Validate some data using the config object validators
+
+        data (Any): primitive data that should be validated. The data will be
+            passed to the validator plugins in descending priority order.
+
+        validate_target : A config key which can be used
+
+        Returns:
+        --------
+
+        Bool results of validation. If any validation plugin raises an exception
+        then it will be false.
+
+        If exception_if_invalid then validation failures with raise and exception
+
+        Raises:
+        -------
+
+        ValidationError on any validation exception.
+
+        ValdiationError if any validator ran into an exception internally.
+
+        @TODO can we be more specific in interpreting validation exceptions.
+
+        """
+        return self.parent.validate(data=data, validate_target=validate_target, exception_if_missing=exception_if_missing)

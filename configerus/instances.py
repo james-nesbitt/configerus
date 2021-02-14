@@ -79,20 +79,8 @@ class PluginInstances:
                     plugin_copy))
         return instances_copy
 
-    def append(add_instances: 'PluginInstances'):
-        """ Add instances from another set to this set
-
-        Parameters:
-        -----------
-
-        add_instances (PluginInstances) : source of instances to be added to
-            this set of instances.
-
-        """
-        self.instances += add_instances.instances
-
     def add_plugin(self, type: str, plugin_id: str, instance_id: str, priority: int) -> object:
-        """ Create a plugin and add it to the lidt
+        """ Create a plugin and add it to the list
 
         Parameters:
         -----------
@@ -323,7 +311,7 @@ class PluginInstances:
 
         # sort from high to low (avoid divide by zero)
         sorted_instances = sorted(matched_instances, key=lambda instance: 1 /
-                                  instance.priority if instance.priority else 1)
+                                  instance.priority if instance.priority > 1 else 1)
         return sorted_instances
 
 
