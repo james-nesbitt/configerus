@@ -169,6 +169,9 @@ class Config:
         supports, and the code here doesn't need to get fancy with function arguments
 
         """
+        # drop any loaded config
+        self.loaded = {}
+        # add the plugin to our list.
         return self.plugins.add_plugin(Type.SOURCE, plugin_id, instance_id, priority)
 
     def load(self, label: str, force_reload: bool = False, validator: str = ""):
