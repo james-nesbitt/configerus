@@ -179,4 +179,4 @@ class Loaded:
         @TODO can we be more specific in interpreting validation exceptions.
 
         """
-        return self.parent.validate(data=data, validate_target=validate_target, exception_if_missing=exception_if_missing)
+        return self.parent.validate(data=data, validate_target=validate_target, exception_if_invalid=exception_if_invalid)
