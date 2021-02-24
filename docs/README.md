@@ -13,12 +13,18 @@ Before you have `loaded` the source plugins have probably done very little in
 terms of resource consumption, other than perhaps some raw validation.
 
 A label allows a source to compartmentalize top level config, but it is also
-there for some plugin realities.
+there for some plugin realities, such as comparing different files to
+non-file sources.
+
+Loading is implemented by the `.load({label})` operation on a config object.
+This returns a LoadedConfig object.
 
 ### get() values from loaded config
 
 Once a label has been `loaded`, you can `get` values from the config by asking
 for a "dot" notation path in the resulting primitive.
+
+Get is implemented by running a `.get({target})` on a loaded config object.
 
 ### templating syntaxes
 
@@ -35,12 +41,23 @@ Some examples are:
 
 a .get() value like "My name is {user.name}" would try to replace the {user.name}
 portion with a .get('user.name').  The retrieval can point to other config labels
-and can specify a default value if the value isn't found
+and can specify a default value if the value isn't found.
+
+If your template portion of a string is the whole string, and the entire value
+is replaced with the .get() return, which allows other primitives such as dicts
+and lists to be used.
+
+Some examples:
+
+`.get('Pull from another label {other_label:get.target}')`
+`.get('specify a default {i.dont.exist?I do exist}')`
 
 #### File formatter
 
 a .get*( value like "[file:path/to/my/file.json]") will actually return the
-unmarshalled contents of the file.json file.
+ contents of the file.json file.  If doing a full match replacement then the
+ structured contents of the file replace the whole value, but a partial string
+ template will just insert the string contents of the file.
 
 ### Validating
 
@@ -52,7 +69,7 @@ for the validation that the plugin will recognize. If the plugin recognized the
 pattern then it will attempt to validate the data, and throw an exception if
 invalid content is found.
 
-The `jsonschema` validtor plugin expects `jsonschema:arbitrary.config.key`.  It
+The `jsonschema` validator plugin expects `jsonschema:arbitrary.config.key`.  It
 will retrieve schema from the config object using
 `config.load('jsonschema').get('arbitrary.config.key')` and attempt to validate
 using the response as a schema.
