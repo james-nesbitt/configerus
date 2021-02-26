@@ -27,7 +27,7 @@ class JsonSchemaValidatorPlugin():
             schema = schema_config.get(validate_key, exception_if_missing=True)
 
         except Exception as e:
-            raise NotImplemented(
+            raise NotImplementedError(
                 "Could not access jsonschema validation schema from config target '{}:{}'".format(
                     PLUGIN_ID_VALIDATE_JSONSCHEMA_SCHEMA_CONFIG_LABEL, validate_key))
 
