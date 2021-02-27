@@ -5,7 +5,7 @@ from configerus.config import Config
 
 logger = logging.getLogger('configerus.contrib.get:formatter')
 
-CONFIG_DEFAULT_MATCH_PATTERN = r'\{((?P<source>\w+):)?(?P<key>[\w.]+)(\?(?P<default>[^\}]+))?\}'
+CONFIG_DEFAULT_MATCH_PATTERN = r'\{((?P<source>\w+):)?(?P<key>[-\w.]+)(\?(?P<default>[^\}]+))?\}'
 """ Default regex pattern used to string template, which needs to identify
 keys that can be used for replacement. Needs to have a named group for
 key, and can have named group for source and default
