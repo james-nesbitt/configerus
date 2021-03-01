@@ -51,6 +51,58 @@ class Loaded:
         """
         self.data = data
 
+    def has(self, key: Any = LOADED_KEY_ROOT, format: bool = True,
+            exception_if_missing: bool = False, validator: str = ""):
+        """ check if a key value exists in the config
+
+        using a key, traverse a tree of data and return a boolean for if the key
+        can be found.
+
+        Parameters:
+
+        key (Varies) : specify the key path down the loaded config data dict.
+
+            This is a very forgiving and adaptive parameter.  You have can pass:
+
+            '1.2.3.4' : "dot" notation which means the steps down the tree are
+                1, 2, 3 then 4.
+
+            ['1', '2', '3', '4'] : asks for the same '1.2.3.4' path as above.
+
+            if the loaded data was:
+            ```
+                {
+                    '1': {
+                        '2': {
+                            '3': {
+                                '4': 'my value'
+                            }
+                        }
+                    }
+                }
+            ```
+            Then the returned value would be 'my value'
+
+            You can also mix and match with out worrying about clean formatting:
+
+            ['1.2', '3.4']
+            ['1.2.3.4', '', '.']
+            ['1', ['2', '3.4']]
+            ['1', '2', '3.', '.4']
+
+            (all are equivalent to '1.2.3.4')
+
+            This allows you to pass around keys and append to them on the fly
+            without having to be overly concerned about clean formatting.
+
+        Returns:
+        --------
+
+        Boolean : if a value exists in laoded config
+
+        """
+        return self.get(key, format=False, validator='', exception_if_missing=False) is not None
+
     def get(self, key: Any = LOADED_KEY_ROOT, format: bool = True,
             exception_if_missing: bool = False, validator: str = ""):
         """ get a key value from the loaded config
@@ -133,7 +185,7 @@ class Loaded:
                 logger.debug("Failed to find config key : %s", key)
                 value = None
 
-        if value is not None:
+        if format and value is not None:
             # try to format any values
             value = self.format(value)
 
