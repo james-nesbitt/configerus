@@ -39,6 +39,8 @@ def tree_get(node: Dict, keys: List[str], glue: str = '.', ignore: List[str] = [
 
     for step in flat_steps:
         try:
+            if node is None:
+                raise KeyError("Path tried to descend into None")
             if isinstance(node, str):
                 raise KeyError("Path tried to descend into a string: {}".format(node))
             elif isinstance(node, list) and step.isnumeric():

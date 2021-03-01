@@ -34,6 +34,8 @@ class Loaded:
            other sources.
 
         """
+        assert data is not None, "None data was passed in"
+
         self.data = data
         self.parent = parent
         self.instance_id = instance_id
@@ -205,13 +207,19 @@ class Loaded:
         """
         return self.parent.format(data, self.instance_id)
 
-    def validate(self, data, validate_target: str, exception_if_invalid: bool = True):
+    def validate(self, data, validate_target: Any, exception_if_invalid: bool = True):
         """ Validate some data using the config object validators
 
         data (Any): primitive data that should be validated. The data will be
             passed to the validator plugins in descending priority order.
 
-        validate_target : A config key which can be used
+        validate_target (Any) : Validation target which will be interpreted by the
+            validation plugins.  Two typical formats are common:
+
+            1. a string with some identifiable pattern that a plugi can recognize
+            2. a dict with keys that different plugins can recognize.
+
+            if empty/None then no validation is performed.
 
         Returns:
         --------
