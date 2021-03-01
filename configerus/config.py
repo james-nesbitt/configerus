@@ -1,6 +1,7 @@
 import logging
 from importlib import metadata
 import copy
+from typing import Any
 
 from .plugin import Factory, Type
 from .instances import PluginInstances
@@ -267,7 +268,7 @@ class Config:
         """
         return self.plugins.add_plugin(Type.FORMATTER, plugin_id, instance_id, priority)
 
-    def format(self, data, default_label: str, validator: str = ""):
+    def format(self, data, default_label: Any, validator: str = ""):
         """ Format some data using the config object formatters
 
         data (Any): primitive data that should be formatted. The data will be
@@ -277,8 +278,13 @@ class Config:
             target without a label source, a default source is used to tell a
             formatter what config label to use in its absence.
 
-        validator (str) : optional validation string to apply to the formatted
-            data
+        validate_target (Any) : Validation target which will be interpreted by the
+            validation plugins.  Two typical formats are common:
+
+            1. a string with some identifiable pattern that a plugi can recognize
+            2. a dict with keys that different plugins can recognize.
+
+            if empty/None then no validation is performed.
 
         """
         for formatter in self.plugins.get_plugins(type=Type.FORMATTER, exception_if_missing=False):
