@@ -5,6 +5,10 @@ from configerus.plugin import FormatFactory, SourceFactory
 from .source import ConfigSourcePathPlugin
 from .format import ConfigFormatFilePlugin
 
+
+CONFIGERUS_PATH_KEY = 'path'
+""" if you load paths from config, this is the key that should give the path """
+
 PLUGIN_ID_SOURCE_PATH = 'path'
 """ ConfigSource plugin_id for the configerus path configsource plugin """
 
