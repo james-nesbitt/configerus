@@ -12,6 +12,7 @@ PLUGIN_ID_SOURCE_DICT = 'dict'
 CONFIGERUS_DICT_DATA_KEY = 'data'
 """ if you load paths from config, this is the key that should give the path """
 
+
 @SourceFactory(plugin_id=PLUGIN_ID_SOURCE_DICT)
 def plugin_factory_configsource_dict(config: Config, instance_id: str = ''):
     """ create an configsource dict plugin """
