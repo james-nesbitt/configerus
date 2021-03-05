@@ -19,7 +19,7 @@ def plugin_factory_configsource_path(config: Config, instance_id: str = ''):
     return ConfigSourcePathPlugin(config, instance_id)
 
 
-PLUGIN_ID_FORMAT_FILE = 'file'
+PLUGIN_ID_FORMAT_FILE = 'configerus.plugin.formatter.file'
 """ Format plugin_id for the configerus filepath format plugin """
 
 

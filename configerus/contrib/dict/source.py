@@ -3,6 +3,7 @@ import logging
 
 from configerus.config import Config
 
+
 class ConfigSourceDictPlugin():
     """   """
 
