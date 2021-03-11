@@ -1,22 +1,37 @@
+"""
+
+Config source from JSON contents of an ENV variable
+
+This plugin allows you to include JSON in a single ENV variable which if present
+will be used as a config source.
+
+This allows large runtime config overrides with out a lot of individual ENV
+variables being needed.
+
+If you find that your JSON is tiny and difficult to design/manage, then confider
+usng the 'specific' env source plugin.
+
+string case for keys is a weird topic.  We .lower() all keys as it seems a
+decent convention.
+
+"""
 from typing import Dict, Any
 import logging
 import os
 
 from configerus.config import Config
 
-logger = logging.getLogger('configerus.contrib.env.source')
+logger = logging.getLogger('configerus.contrib.env.source.specific')
+
+PLUGIN_ID_SOURCE_ENV_SPECIFIC = 'env-specific'
+""" ConfigSource plugin_id for the configerus env configsource plugin """
+
+CONFIGERUS_ENV_SPECIFIC_BASE_KEY = 'base'
+""" Config key for retreiving the env specific base value from config """
 
 
-class ConfigSourceEnvPlugin():
-    """ Get config from ENV variables
-
-    if a base is provided, it is used as a root for all ENV variables
-    as "{base}_"
-
-    string case for keys is a weird topic.  We .lower() all keys as it seems a
-    decent convention.
-
-    """
+class ConfigSourceEnvSpecificPlugin():
+    """ Get config from all ENV variables """
 
     def __init__(self, config: Config, instance_id: str):
         """  """
