@@ -85,7 +85,11 @@ class ConfigFormatFilePlugin:
 
         """
         file = match.group('file')
-        extension = os.path.splitext(file)[1].lower()
+        extension = ''
+
+        file_split = os.path.splitext(file)
+        if len(file_split) > 0:
+            extension = file_split[1].lower()
 
         try:
             with open(file) as file_o:
