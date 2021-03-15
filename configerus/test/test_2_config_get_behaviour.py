@@ -17,7 +17,7 @@ import unittest
 
 import configerus
 from configerus.loaded import LOADED_KEY_ROOT
-from configerus.contrib.env import PLUGIN_ID_SOURCE_ENV
+from configerus.contrib.env import PLUGIN_ID_SOURCE_ENV_SPECIFIC
 from configerus.contrib.dict import PLUGIN_ID_SOURCE_DICT
 from configerus.contrib.files import PLUGIN_ID_SOURCE_PATH
 
@@ -130,7 +130,7 @@ config_sources = [
     {
         'name': 'eighth',
         'priority': 85,
-        'type': PLUGIN_ID_SOURCE_ENV,
+        'type': PLUGIN_ID_SOURCE_ENV_SPECIFIC,
         'data': {
             'env_one': "env eighth env one",
             'env_two_one': "env eighth env two.one",
