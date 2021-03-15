@@ -59,7 +59,7 @@ class ConfigFormatGetPlugin():
         match = self.pattern.search(target, start)
         while match:
             rep = str(self._get(match, default_source))
-            target = target[:match.start()] + rep + target[match.end():]
+            target = target[:match.start()] + rep + (target[match.end():] if len(target) > match.end() else '')
             start = start + len(rep)
             match = self.pattern.search(target, start)
 
@@ -77,8 +77,8 @@ class ConfigFormatGetPlugin():
         try:
             return source_config.get(key, exception_if_missing=True)
         except KeyError as e:
-            if match.group('default'):
-                return match.group('default')
+            if default is not None:
+                return default
             else:
                 # if a template string wasn't found then exception
                 raise e
