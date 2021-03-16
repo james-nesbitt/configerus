@@ -6,7 +6,6 @@ logger = logging.getLogger('configerus')
 
 
 CONFIGERUS_BOOSTRAP_DEFAULT = [
-    'deep',
     'get',
     'files'
 ]

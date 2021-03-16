@@ -5,27 +5,12 @@ from configerus.config import Config
 
 logger = logging.getLogger('configerus.contrib.get:formatter')
 
-CONFIG_DEFAULT_MATCH_PATTERN = r'\{((?P<source>\w+):)?(?P<key>[-\w.]+)(\?(?P<default>[^\}]+))?\}'
-""" Default regex pattern used to string template, which needs to identify
-keys that can be used for replacement. Needs to have a named group for
-key, and can have named group for source and default
-
-The above regex pattern resolves for three named groups: source, key and default:
-
-the {first?check} value          : key=first, default=check
-a {common.dot.notation} test     : key=commond.dot.notation
-a {label:dot.notation.test} here : source=label, key=dot.notation.test
-
-so:
-1. all replacements are wrapped in "{}"
-2. an optional "source:" group tells config to look in a specifig label
-3. a "?default" group allows a default (untemplated) value to be used if the
-   key cannot be found
-"""
+CONFIG_DEFAULT_MATCH_PATTERN = r'((?P<label>\w+)\:)?(?P<key>[-\w.]+)'
+""" Default regex pattern used detect format targets for config retrieval """
 
 
 class ConfigFormatGetPlugin():
-    """   """
+    """ return a format replacement by retriving data from config """
 
     def __init__(self, config: Config, instance_id: str):
         """  """
@@ -34,51 +19,38 @@ class ConfigFormatGetPlugin():
 
         self.pattern = re.compile(CONFIG_DEFAULT_MATCH_PATTERN)
 
-    def format(self, target, default_source: str):
-        """ Format a string by substituting config values
+    def format(self, key, default_label: str):
+        """ Format a key by returning config values
 
-        target: a string that should be formatted. If not a string then no
-            formatting is performed
+        Parameters:
+        -----------
 
-        default_source : if format/replace patterns don't have a source defined
-            then this is used as a source.
+        key: a string that should gies instructions to the formatter on how to
+            create a format replacements
+
+        default_label : if format/replace patterns don't have a label defined
+            then this is used as a label.
+
+        Raises:
+        -------
+
+        KeyError if the source or the key could not be found.
 
         """
 
-        if not isinstance(target, str):
-            return target
+        match = self.pattern.fullmatch(key.strip())
+        if not match:
+            raise KeyError("Could not interpret Format action key '{}'".format(key))
 
-        # if the entire target is the match, then replace whatever type we get
-        # out of the config .get() call
-        match = self.pattern.fullmatch(target)
-        if match:
-            return self._get(match, default_source)
-
-        # search through the target replacing any found matches with
-        start = 0
-        match = self.pattern.search(target, start)
-        while match:
-            rep = str(self._get(match, default_source))
-            target = target[:match.start()] + rep + (target[match.end():] if len(target) > match.end() else '')
-            start = start + len(rep)
-            match = self.pattern.search(target, start)
-
-        return target
-
-    def _get(self, match, default_source: str):
         """ from an re.match get data from config """
+        label = match.group('label')
         key = match.group('key')
-        source = match.group('source')
-        default = match.group('default')
 
-        if source is None:
-            source = default_source
-        source_config = self.config.load(source)
-        try:
-            return source_config.get(key, exception_if_missing=True)
-        except KeyError as e:
-            if default is not None:
-                return default
-            else:
-                # if a template string wasn't found then exception
-                raise e
+        if label is None:
+            label = default_label
+
+        if label is None:
+            label = default_label
+
+        loaded = self.config.load(label)
+        return loaded.get(key, exception_if_missing=True)
