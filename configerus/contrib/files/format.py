@@ -7,14 +7,14 @@ import logging
 
 from configerus.config import Config
 
-FILES_FORMAT_MATCH_PATTERN = r'(\[(file\:)(?P<file>(\~?\/?\w+\/)*\w*(\.\w+)?)\])'
+FILES_FORMAT_MATCH_PATTERN = r'(?P<file>(\~?\/?\w+\/)*\w*(\.\w+)?)'
 """ A regex pattern to identify files that should be embedded """
 
 logger = logging.getLogger('configerus.contrib.files:format')
 
 
 class ConfigFormatFilePlugin:
-    """   """
+    """ Format a key by returning the contents of a file """
 
     def __init__(self, config: Config, instance_id: str):
         """  """
@@ -23,50 +23,17 @@ class ConfigFormatFilePlugin:
 
         self.pattern = re.compile(FILES_FORMAT_MATCH_PATTERN)
 
-    def format(self, target, default_source: str):
+    def format(self, key, default_label: str):
         """ Format a string by substituting config values
 
         Parameters
         ----------
 
-        target: a string that should be formatted. If not a string then no
-            formatting is performed
+        key: a string that should gies instructions to the formatter on how to
+            create a format replacements
 
-        default_source : if format/replace patterns don't have a source defined
+        default_label : if format/replace patterns don't have a source defined
             then this is used as a source.
-
-        """
-        if not isinstance(target, str):
-            return target
-
-        # if the entire target is the match, then replace whatever type we get
-        # out of the config .get() call
-        match = self.pattern.fullmatch(target)
-        if match:
-            return self._get(match, return_only_string=False)
-
-        # search through the target replacing any found matches with
-        start = 0
-        match = self.pattern.search(target, start)
-        while match:
-            rep = str(self._get(match))
-            target = target[:match.start()] + rep + target[match.end()]
-            start = start + len(rep)
-            match = self.pattern.search(target, start)
-
-        return target
-
-    def _get(self, match, return_only_string: bool = True):
-        """ find a file match and return the file contents
-
-        Parameters
-        ----------
-
-        match (re Match) a regex match which we use to determine file path
-
-        return_only_string (bool) optional indictor that the function is
-            expecting only a string return.  Knowing this means that we can
-            skip unmarshalling file contents which could be expensive.
 
         Raises
         ------
@@ -84,40 +51,42 @@ class ConfigFormatFilePlugin:
         unmarshalled json/yml file or string contents of the file
 
         """
-        file = match.group('file')
-        extension = ''
 
+        match = self.pattern.fullmatch(key.strip())
+        if not match:
+            raise KeyError("Could not interpret Format action target '{}'".format(key))
+
+        file = match.group('file')
+        """ path to the file to return as a replacement """
+
+        extension = ''
+        """ file extension, used to make decisions about parsing/unmarshalling """
         file_split = os.path.splitext(file)
         if len(file_split) > 0:
             extension = file_split[1].lower()
 
         try:
-            with open(file) as file_o:
-                if not return_only_string:
-                    # try to parse/unmarshall a file instead of just returing it
+            with open(file) as fo:
+                if extension == ".json":
+                    try:
+                        return json.load(fo)
+                    except json.decoder.JSONDecodeError as e:
+                        raise ValueError(
+                            "Failed to parse one of the config files '{}': {}".format(
+                                os.path.join(
+                                    self.path, file), e))
 
-                    if extension == ".json":
-                        try:
-                            data = json.load(file_o)
-                        except json.decoder.JSONDecodeError as e:
-                            raise ValueError(
-                                "Failed to parse one of the config files '{}': {}".format(
-                                    os.path.join(
-                                        self.path, file), e))
-                        return data
-
-                    elif extension == ".yml" or extension == ".yaml":
-                        try:
-                            data = yaml.load(file_o, Loader=yaml.FullLoader)
-                        except yaml.YAMLError as e:
-                            raise ValueError(
-                                "Failed to parse one of the config files '{}': {}".format(
-                                    os.path.join(
-                                        self.path, file), e))
-                        return data
+                elif extension == ".yml" or extension == ".yaml":
+                    try:
+                        return yaml.load(fo, Loader=yaml.FullLoader)
+                    except yaml.YAMLError as e:
+                        raise ValueError(
+                            "Failed to parse one of the config files '{}': {}".format(
+                                os.path.join(
+                                    self.path, file), e))
 
                 # return file contents as a string (above parsing didn't happen)
-                return file_o.read()
+                return fo.read()
 
         except FileNotFoundError as e:
             raise KeyError("Could not embed file as config as file could not be found: {}".format(file))

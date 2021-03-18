@@ -1,13 +1,14 @@
 import logging
 from importlib import metadata
 import copy
-from typing import Any
+from typing import Any, Dict, List
 
 from .plugin import Factory, Type
 from .instances import PluginInstances
 from .shared import tree_merge
 from .loaded import Loaded
 from .validator import ValidationError
+from .format import Formatter
 
 logger = logging.getLogger('configerus:config')
 
@@ -271,6 +272,9 @@ class Config:
     def format(self, data, default_label: Any, validator: str = ""):
         """ Format some data using the config object formatters
 
+        Parameters:
+        -----------
+
         data (Any): primitive data that should be formatted. The data will be
             passed to the formatter plugins in descending priority order.
 
@@ -286,12 +290,20 @@ class Config:
 
             if empty/None then no validation is performed.
 
+        Raises:
+        -------
+
+        Will throw a ValueError if your data contains a format tag that cannot
+        be interpreted.
+        Will raise a KeyError if your data contains a format tag with a bad key
+        for action, or for a value as interpreted by the plugin.
         """
-        for formatter in self.plugins.get_plugins(type=Type.FORMATTER, exception_if_missing=False):
-            data = formatter.format(data, default_label)
+
+        formatter = Formatter(self)
+        data = formatter.format(data=data, default_label=default_label)
 
         if validator:
-            self.validate(self.loaded[label].data, validator)
+            self.validate(data, validator)
 
         return data
 

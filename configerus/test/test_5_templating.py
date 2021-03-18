@@ -61,7 +61,9 @@ config_sources = [
         'data': {
             'config': {
                 '10': "{2}",
-                '11': "__{2}__"
+                '11': "__{{2}}__",
+                '12': "__{{2}}",
+                '13': "{{2}}__"
             }
         }
     },
@@ -71,10 +73,10 @@ config_sources = [
         'type': PLUGIN_ID_SOURCE_DICT,
         'data': {
             'config': {
-                '20': "{does.not.exist?default}",
-                '21': "{does.not.exist}",
-                '22': "{variables:does.not.exist?megadefault}",
-                '23': "{variables:three?default}",
+                '20': "{{does.not.exist?default}}",
+                '21': "{{does.not.exist}}",
+                '22': "{{variables:does.not.exist?megadefault}}",
+                '23': "{{variables:three?default}}",
             }
         }
     },
@@ -95,11 +97,11 @@ config_sources = [
         'data': {
             'config': {
                 '40': "deep 40",
-                '41': "{40}",
+                '41': "{{40}}",
                 '42': {
-                    '1': "{40}",
+                    '1': "{{40}}",
                     '2': {
-                        '1': "{40}"
+                        '1': "{{40}}"
                     }
                 }
             }
@@ -150,47 +152,60 @@ class ConfigTemplating(unittest.TestCase):
     def test_format_sane(self):
         """ simple template replacing using format """
 
-        self.assertEqual(self.config.format('{1}', 'config'), "first 1")
-        self.assertEqual(self.loaded_config.format('{1}'), "first 1")
+        self.assertEqual(self.config.format('{{get::1}}', 'config'), "first 1")
+        self.assertEqual(self.loaded_config.format('{{get::1}}'), "first 1")
+        """ Simple formatting at the config and loadedconfig level """
+
+    def test_format_passthrough(self):
+        """ simple template replacing using passthrough """
+
+        self.assertEqual(self.config.format('{{value::myvalue}}', 'config'), "myvalue")
+        """ passthrough is a mechanism used internally, as a defult plugin for embedded """
+
+    def test_format_sane(self):
+        """ simple template replacing using format relying on default plugin """
+
+        self.assertEqual(self.config.format('{{1}}', 'config'), "first 1")
+        self.assertEqual(self.loaded_config.format('{{1}}'), "first 1")
         """ Simple formatting at the config and loadedconfig level """
 
     def test_format_dot_notation(self):
         """ test that format catches dot notation """
 
-        self.assertEqual(self.config.format('{2.1}', 'config'), "first 2.1")
-        self.assertEqual(self.config.format('{3.2.1}', 'config'), "first 3.2.1")
+        self.assertEqual(self.config.format('{{2.1}}', 'config'), "first 2.1")
+        self.assertEqual(self.config.format('{{3.2.1}}', 'config'), "first 3.2.1")
         """ Simple dot notation descending format """
 
     def test_format_embedding_and_casting(self):
         """ simple template replacing using format """
 
-        self.assertEqual(self.config.format('12345{1}67890', 'config'), "12345first 167890")
-        self.assertEqual(self.config.format('1 23 45 {1}6 78 90', 'config'), "1 23 45 first 16 78 90")
+        self.assertEqual(self.config.format('12345{{1}}67890', 'config'), "12345first 167890")
+        self.assertEqual(self.config.format('1 23 45 {{1}}6 78 90', 'config'), "1 23 45 first 16 78 90")
         """ format replacements in the middle of a string """
 
-        self.assertEqual(self.config.format('{2}', 'config'), {'1': "first 2.1"})
-        self.assertEqual(self.config.format(' {2} ', 'config'), " {'1': 'first 2.1'} ")
+        self.assertEqual(self.config.format('{{2}}', 'config'), {'1': 'first 2.1'})
+        self.assertEqual(self.config.format(' {{2}} ', 'config'), " {'1': 'first 2.1'} ")
         """ format should string cast only not full matches """
 
     def test_format_with_sources(self):
         """ test that sources work with format """
 
-        variables_two = self.config.format("{two}", 'variables')
+        variables_two = self.config.format("{{two}}", 'variables')
         self.assertEqual(variables_two, "first two")
-        self.assertEqual(self.config.format("{variables:two}", 'config'), variables_two)
-        self.assertEqual(self.config.format("{variables:two}", 'variables'), variables_two)
+        self.assertEqual(self.config.format("{{variables:two}}", 'config'), variables_two)
+        self.assertEqual(self.config.format("{{variables:two}}", 'variables'), variables_two)
         """ specifying a source should work """
 
     def test_format_with_defaults(self):
         """ test the defaulting with formatting """
 
-        self.assertEqual(self.config.format("{does.not.exist?default1}", 'config'), 'default1')
-        self.assertEqual(self.config.format("{variables:does.not.exist?default2}", 'config'), 'default2')
+        self.assertEqual(self.config.format("{{does.not.exist?default1}}", 'config'), 'default1')
+        self.assertEqual(self.config.format("{{variables:does.not.exist?default2}}", 'config'), 'default2')
         """ defaults should apply """
 
-        variables_two = self.config.format("{two}", 'variables')
+        variables_two = self.config.format("{{two}}", 'variables')
         self.assertEqual(variables_two, "first two")
-        self.assertEqual(self.config.format("{variables:two?default}", 'config'), variables_two)
+        self.assertEqual(self.config.format('{{variables:two?default}}', 'config'), variables_two)
         """ defaults should not overwrite values that can be found """
 
     def test_get_formatted(self):
@@ -198,29 +213,29 @@ class ConfigTemplating(unittest.TestCase):
 
         config_one = self.loaded_config.get('1')
         self.assertEqual(config_one, "first 1")
-        self.assertEqual(self.config.format('{1}', 'config'), config_one)
+        self.assertEqual(self.config.format('{{1}}', 'config'), config_one)
         """ get should mimic format behaviour, which we tested above """
 
         variables_three = self.loaded_variables.get('three')
         self.assertEqual(variables_three, 3)
-        self.assertEqual(self.loaded_config.format("{variables:three}"), variables_three)
-        self.assertEqual(self.loaded_config.format(" {variables:three} "), " {} ".format(variables_three))
+        self.assertEqual(self.loaded_config.format("{{variables:three}}"), variables_three)
+        self.assertEqual(self.loaded_config.format(" {{variables:three}} "), " {} ".format(variables_three))
         """ test templating for different sources """
 
         self.assertEqual(self.loaded_config.get('20'), "default")
         self.assertEqual(self.loaded_config.get('22'), "megadefault")
         self.assertEqual(self.loaded_config.get('23'), variables_three)
-        """ test the templateing on get() """
+        """ test the templating on get() """
 
     def test_missing_raises_exceptions(self):
         """ missing values should raise exceptions """
 
         with self.assertRaises(KeyError):
-            self.config.format("{does.not.exist}", 'config')
+            self.config.format("{{does.not.exist}}", 'config')
             """ test template fails on missing keys in config format """
 
         with self.assertRaises(Exception):
-            self.loaded_config.format("{does.not.exist}")
+            self.loaded_config.format("{{does.not.exist}}")
             """ test template fails on missing keys in loaded format """
 
         with self.assertRaises(Exception):
@@ -245,7 +260,7 @@ class ConfigTemplating(unittest.TestCase):
 
         self.assertIsNotNone(replace_json)
 
-        replace_path = replace_config.format('{paths:replace}')
+        replace_path = replace_config.format('{{paths:replace}}')
         self.assertIsNotNone(replace_path)
 
         replace_full_path = os.path.join(replace_path, 'replace.json')
@@ -254,10 +269,45 @@ class ConfigTemplating(unittest.TestCase):
         self.assertIsNotNone(replace_json)
 
         # confirm that a file replace full match works
-        self.assertEqual(replace_json, replace_config.format('[file:' + replace_full_path + ']'))
-        self.assertEqual(
-            ' {} '.format(
-                json.dumps(replace_json)), replace_config.format(
-                ' [file:' + replace_full_path + '] '))
+        self.assertEqual(replace_json, replace_config.format('{{file::' + replace_full_path + '}}'))
+
+        # This test works but it writes using single quotes which don't match the direct json dump
+        # self.assertEqual(
+        #     ' {} '.format(json.dumps(replace_json)),
+        #     replace_config.format(' {{file::' + replace_full_path + '}} ')
+        # )
         # confirm mixed templating
-        self.assertEqual(replace_json, replace_config.format('[file:{paths:replace}/replace.json]'))
+        self.assertEqual(replace_json, replace_config.format('{{file::{{paths:replace}}/replace.json}}'))
+        self.assertEqual('default', replace_config.format('{{file::{{paths:replace}}/no_such_file.json?default}}'))
+
+    def test_crazy_stuff(self):
+        """ test some crazy templating ideas """
+        config_fourty = self.loaded_config.get('40')
+
+        self.assertEqual(self.loaded_config.format(' A{{40}} Z'), ' A{} Z'.format(config_fourty))
+
+        self.assertEqual(self.loaded_config.format('A{{value::target}}Z'), 'AtargetZ')
+
+        self.assertEqual(self.loaded_config.format('A{{get::40?default}}Z'), 'A{}Z'.format(config_fourty))
+
+        self.assertEqual(self.loaded_config.format('A{{fail?default}}Z'), 'AdefaultZ')
+
+        self.assertEqual(
+            self.loaded_config.format('A{{get::{{value::40}}?value::custom}}Z'),
+            'A{}Z'.format(config_fourty))
+
+        self.assertEqual(self.loaded_config.format('A{{value::{{value::{{value::test}}}}?value::custom}}Z'), 'AtestZ')
+
+        self.assertEqual(self.loaded_config.format('A{{get::fail?default}}Z'), 'AdefaultZ')
+
+        self.assertEqual(self.loaded_config.format('A{{fail?get::fail?get::fail?default}}Z'), 'AdefaultZ')
+
+    def test_special_formats(self):
+        """ test some of the special format options """
+
+        self.assertIsNone(self.loaded_config.format('{{special::None}}'))
+        self.assertIsNone(self.loaded_config.format('{{fail?special::None}}'))
+        self.assertIsNone(self.loaded_config.format('{{fail?get::fail?special::None}}'))
+
+        self.assertEqual(self.loaded_config.format('{{special::[]}}'), [])
+        self.assertEqual(self.loaded_config.format('{{special::{} }}'), {})
