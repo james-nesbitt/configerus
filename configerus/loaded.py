@@ -53,8 +53,7 @@ class Loaded:
         """
         self.data = data
 
-    def has(self, key: Any = LOADED_KEY_ROOT, format: bool = True,
-            exception_if_missing: bool = False, validator: str = ""):
+    def has(self, key: Any = LOADED_KEY_ROOT):
         """ check if a key value exists in the config
 
         using a key, traverse a tree of data and return a boolean for if the key
@@ -100,13 +99,16 @@ class Loaded:
         Returns:
         --------
 
-        Boolean : if a value exists in laoded config
+        Boolean : if a value exists in loaded config
 
         """
-        return self.get(key, format=False, validator='', exception_if_missing=False) is not None
+        try:
+            tree_get(self.data, key, ignore=['', LOADED_KEY_ROOT])
+            return True
+        except KeyError as e:
+            return False
 
-    def get(self, key: Any = LOADED_KEY_ROOT, format: bool = True,
-            exception_if_missing: bool = False, validator: str = ""):
+    def get(self, key: Any = LOADED_KEY_ROOT, format: bool = True, validator: str = "", default: Any = None):
         """ get a key value from the loaded config
 
         using a key, traverse a tree of data and return the value, optionally
@@ -161,6 +163,9 @@ class Loaded:
 
             Validation IS APPLIED if the key could not be matched.
 
+        default (Any) : default which will be returned if no matching key is
+            found.  This means that no Exception will be thrown on KeyError
+
         Returns:
 
         (Any) anything in the Dict is a valid return.  The return could be a
@@ -171,7 +176,8 @@ class Loaded:
         Throws:
 
         Can throw a KeyError if the key cannot be found (which also occurs if
-        all sources produced no data and a non-empty key was passed.)
+        all sources produced no data and a non-empty key was passed,) ONLY IF
+        no default value was provided.
 
         """
         value = ""
@@ -180,12 +186,13 @@ class Loaded:
             value = tree_get(self.data, key, ignore=['', LOADED_KEY_ROOT])
 
         except KeyError as e:
-            if exception_if_missing:
+            if default is None:
                 # hand off the exception
                 raise e
             else:
+                # Use the default value
                 logger.debug("Failed to find config key : %s", key)
-                value = None
+                value = default
 
         if format and value is not None:
             # try to format any values

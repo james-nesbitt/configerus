@@ -62,10 +62,14 @@ class ConfigBehaviour(unittest.TestCase):
 
         # check original values
         self.assertEqual(config_copy_orig.get('one'), 'orig 1')
-        self.assertIsNone(config_copy_orig.get('two'))
+        with self.assertRaises(KeyError):
+            config_copy_orig.get('two')
         # check that copied config didn't modify original
         self.assertEqual(config_copy_orig.get('one'), config_copy_late.get('one'))
-        self.assertEqual(config_copy_orig.get('two'), config_copy_late.get('two'))
+        with self.assertRaises(KeyError):
+            config_copy_late.get('two')
 
         self.assertEqual(config1_copy.get('one'), 'copy1 1')
         self.assertEqual(config1_copy.get('two'), 'copy1 2')
+        self.assertEqual(config2_copy.get('one'), 'copy2 1')
+        self.assertEqual(config2_copy.get('two'), 'copy2 2')

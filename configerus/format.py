@@ -147,6 +147,10 @@ class Formatter:
     def format_string(self, subject: str, default_label: str):
         """ format subject string, looking for and processing any formatting tags in the subject """
 
+        # fast stop test.  if no start tags are in the string then just abort
+        if self.START_MATCH not in subject:
+            return subject
+
         subject_tokenized = subject
         for token in [
             self.START_MATCH,
