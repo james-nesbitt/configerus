@@ -53,4 +53,4 @@ class ConfigFormatGetPlugin():
             label = default_label
 
         loaded = self.config.load(label)
-        return loaded.get(key, exception_if_missing=True)
+        return loaded.get(key)

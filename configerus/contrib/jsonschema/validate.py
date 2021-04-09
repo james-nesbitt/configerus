@@ -50,9 +50,13 @@ class JsonSchemaValidatorPlugin():
                 # returns of any value signal validation as validate only catches exceptions
                 return
 
+            # This case means that we were told to look for a jsonschema source
+            # in config, which we can find by loading jsonschema as a config label
+            # and then treating the passed string as a config key for .get()
+
             try:
                 schema_config = self.config.load(PLUGIN_ID_VALIDATE_JSONSCHEMA_SCHEMA_CONFIG_LABEL)
-                schema = schema_config.get(validate_key, exception_if_missing=True)
+                schema = schema_config.get(validate_key)
 
             except Exception as e:
                 raise NotImplementedError(

@@ -189,8 +189,10 @@ class ConfigBehaviour(unittest.TestCase):
         """ confirm that keys defined in more than one source get overriden """
 
         self.assertEqual(self.loaded_config.get('4'), "fourth 4")
-        self.assertIsNone(self.loaded_config.get('5.1', exception_if_missing=False))
         self.assertEqual(self.loaded_config.get('5'), "seventh 5 json")
+
+        with self.assertRaises(Exception):
+            self.loaded_config.get('5.1')
 
     def test_get_multiple_keys(self):
         """ test the the loaded get of various key formats """
