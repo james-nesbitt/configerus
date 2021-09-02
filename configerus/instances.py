@@ -9,23 +9,26 @@ tools for centrally managing plugins and lists of plugins.
 import logging
 from typing import List
 
-logger = logging.getLogger('configerus.instance')
+from .plugin import Type
+
+logger = logging.getLogger("configerus.instance")
 
 
 class PluginInstances:
-    """ List of plugins wrapped in the PluginInstance struct so that it can be
-        prioritized and managed.
+    """List of plugins wrapped in the PluginInstance struct.
 
-        Question: Why take a factory/copy function instead of just building here?
-        Answer: this functionality ended up being useful as an export but was
-            limited in reusability without dynamic construction and copying
+    So that it can be prioritized and managed.
+
+    Question: Why take a factory/copy function instead of just building here?
+    Answer: this functionality ended up being useful as an export but was
+        limited in reusability without dynamic construction and copying
     """
 
     def __init__(self, plugin_factory):
-        """
+        """Initialize the plugin.
+
         Parameters:
         -----------
-
         plugin_factory (Callable) : function to product new plugin objects on
             request.
 
@@ -43,14 +46,13 @@ class PluginInstances:
         """ A factory method to produce new plugins """
 
     def copy(self, new_plugin_factory, plugin_copier):
-        """ Make a copy of this plugin list.
+        """Make a copy of this plugin list.
 
         This copies the instance list and by copying every plugin, overriding
         its config and adding it to the new list
 
         Parameters:
         -----------
-
         new_plugin_factory (Callable) : a new callable to replace the one for this
             instance.
 
@@ -59,14 +61,13 @@ class PluginInstances:
 
         Returns:
         --------
-
         A copy of this InstanceList, with copies of all of the PluginInstance
         instances with copies of the plugins.
         Changing/Using the copy should not affect the original.
 
         """
+        # A new instance list which we will return after copying over plugin
         instances_copy = PluginInstances(new_plugin_factory)
-        """A new instance list which we will return after copying over plugins """
 
         for instance in self.instances:
             plugin_copy = plugin_copier(instance.plugin)
@@ -76,15 +77,19 @@ class PluginInstances:
                     instance.plugin_id,
                     instance.instance_id,
                     instance.priority,
-                    plugin_copy))
+                    plugin_copy,
+                )
+            )
         return instances_copy
 
-    def add_plugin(self, type: str, plugin_id: str, instance_id: str, priority: int) -> object:
-        """ Create a plugin and add it to the list
+    # pylint: disable=redefined-builtin
+    def add_plugin(
+        self, type: Type, plugin_id: str, instance_id: str, priority: int
+    ) -> object:
+        """Create a plugin and add it to the list.
 
         Parameters:
         -----------
-
         type (str) : plugin type as a string (used for filtering)
 
         plugin_id (str) : id of the plugin as registered using the plugin
@@ -98,18 +103,23 @@ class PluginInstances:
 
         Returns:
         --------
-
         Returns the plugin so that you can do any actions to the plugin that it
         supports, and the code here doesn't need to get fancy with function
         arguments
-
         """
-
         if not plugin_id:
-            raise KeyError("Could not create a plugin as an invalid plugin_id was given: '{}'".format(plugin_id))
+            raise KeyError(
+                "Could not create a plugin as an invalid plugin_id was given: '{}'".format(
+                    plugin_id
+                )
+            )
 
         if not type:
-            raise KeyError("Could not create a plugin as an invalid type was given: '{}'".format(plugin_id))
+            raise KeyError(
+                "Could not create a plugin as an invalid type was given: '{}'".format(
+                    plugin_id
+                )
+            )
 
         if not instance_id:
             # generate some kind of unique instance_id key
@@ -121,58 +131,71 @@ class PluginInstances:
                 instance_id = "{}_{}".format(base_instance_id, index)
 
         if self.has_plugin(instance_id, plugin_id):
-            self.warn("Replacing '{}.{}' with new plugin instance".format(plugin_id, instance_id))
+            logger.warning(
+                "Replacing '%s.%s' with new plugin instance",
+                plugin_id,
+                instance_id,
+            )
 
         try:
             # ask our factory to create the new plugin
-            plugin_factory = self.plugin_factory
-            plugin = plugin_factory(type=type, plugin_id=plugin_id, instance_id=instance_id, priority=priority)
-            instance = PluginInstance(type, plugin_id, instance_id, priority, plugin)
+            plugin = self.plugin_factory(
+                type=type,
+                plugin_id=plugin_id,
+                instance_id=instance_id,
+                priority=priority,
+            )
+            instance = PluginInstance(
+                type, plugin_id, instance_id, priority, plugin
+            )
 
-        except NotImplementedError as e:
+        except NotImplementedError as err:
             raise NotImplementedError(
-                "Could not create configerus plugin '{}:{}' as that plugin_id could not be found.".format(
-                    type.value, plugin_id)) from e
+                f"Could not create configerus plugin '{type.value}:{plugin_id}'"
+                " as that plugin_id could not be found."
+            ) from err
 
         self.instances.append(instance)
         return plugin
 
     def __len__(self) -> int:
-        """ Return how many plugin instances we have """
+        """Return how many plugin instances we have."""
         return len(self.instances)
 
     def __getitem__(self, instance_id: str) -> object:
-        """ Handle subscription request
+        """Handle subscription request.
 
         For subscriptions assume that an instance_id is being retrieved and that
         a plugin is desired for return.
 
         Parameters:
         -----------
-
         instance_id (str) : Instance instance_id to look for
 
         Returns:
-
+        --------
         Plugin object for highest priority plugin with the matching instance_id
 
         Raises:
         -------
-
         KeyError if the key cannot be matched,
-
         """
         return self.get_plugin(instance_id=instance_id)
 
-    """ Accessing plugins """
+    # Accessing plugins
 
-    def get_plugin(self, plugin_id: str = '', instance_id: str = '',
-                   type: str = '', exception_if_missing: bool = True) -> object:
-        """ Retrieve the highest priority matching plugin
+    # pylint: disable=redefined-builtin
+    def get_plugin(
+        self,
+        plugin_id: str = "",
+        instance_id: str = "",
+        type: Type = None,
+        exception_if_missing: bool = True,
+    ) -> object:
+        """Retrieve the highest priority matching plugin.
 
         Parameters:
         -----------
-
         instance_id (str) : plugin Instance intance_id for matching
         plugin_id (str) : plugin Instance plugin_id for matching
         type (Type) : plugin Instance type for matching
@@ -182,23 +205,31 @@ class PluginInstances:
 
         Returns:
         --------
-
         Highest priority matching plugin object
-
         """
-        instance = self.get_instance(plugin_id=plugin_id, instance_id=instance_id, type=type,
-                                     exception_if_missing=exception_if_missing)
+        instance = self.get_instance(
+            plugin_id=plugin_id,
+            instance_id=instance_id,
+            type=type,
+            exception_if_missing=exception_if_missing,
+        )
 
         if instance is not None:
             return instance.plugin
+        return None
 
-    def get_plugins(self, plugin_id: str = '', instance_id: str = '',
-                    type: str = '', exception_if_missing: bool = True) -> object:
-        """ Retrieve matching plugins
+    # pylint: disable=redefined-builtin
+    def get_plugins(
+        self,
+        plugin_id: str = "",
+        instance_id: str = "",
+        type: Type = None,
+        exception_if_missing: bool = True,
+    ) -> object:
+        """Retrieve matching plugins.
 
         Parameters:
         -----------
-
         instance_id (str) : plugin Instance intance_id for matching
         plugin_id (str) : plugin Instance plugin_id for matching
         type (Type) : plugin Instance type for matching
@@ -208,26 +239,31 @@ class PluginInstances:
 
         Returns:
         --------
-
         List of sorted matching plugin objects
-
         """
-        instances = self.get_instances(plugin_id=plugin_id, instance_id=instance_id, type=type)
+        instances = self.get_instances(
+            plugin_id=plugin_id, instance_id=instance_id, type=type
+        )
 
         if not instances:
             if exception_if_missing:
-                raise KeyError("Could not find any matching plugins[{}][{}][{}]".format(
-                    plugin_id, instance_id, type))
+                raise KeyError(
+                    "Could not find any matching plugins[{}][{}][{}]".format(
+                        plugin_id, instance_id, type
+                    )
+                )
             return []
 
         return [instance.plugin for instance in instances]
 
-    def has_plugin(self, plugin_id: str = '', instance_id: str = '', type: str = '') -> bool:
-        """ does a matching plugin exist
+    # pylint: disable=redefined-builtin
+    def has_plugin(
+        self, plugin_id: str = "", instance_id: str = "", type: Type = None
+    ) -> bool:
+        """Check if a matching plugin exist.
 
         Parameters:
         -----------
-
         instance_id (str) : plugin Instance intance_id for matching
         plugin_id (str) : plugin Instance plugin_id for matching
         type (Type) : plugin Instance type for matching
@@ -237,19 +273,30 @@ class PluginInstances:
 
         Returns:
         --------
-
         bool if a plugin match can be found
 
         """
-        return bool(len(self.get_instances(plugin_id=plugin_id, instance_id=instance_id, type=type)))
+        return bool(
+            len(
+                self.get_instances(
+                    plugin_id=plugin_id, instance_id=instance_id, type=type
+                )
+            )
+            > 0
+        )
 
-    def get_instance(self, plugin_id: str = '', instance_id: str = '',
-                     type: str = '', exception_if_missing: bool = True) -> 'PluginInstance':
-        """ Retrieve amatching instance
+    # pylint: disable=redefined-builtin
+    def get_instance(
+        self,
+        plugin_id: str = "",
+        instance_id: str = "",
+        type: Type = None,
+        exception_if_missing: bool = True,
+    ) -> "PluginInstance":
+        """Retrieve amatching instance.
 
         Parameters:
         -----------
-
         instance_id (str) : plugin Instance intance_id for matching
         plugin_id (str) : plugin Instance plugin_id for matching
         type (Type) : plugin Instance type for matching
@@ -259,28 +306,31 @@ class PluginInstances:
 
         Returns:
         --------
-
         the highest priority matching Instance object
-
         """
         try:
-            sorted_and_filtered = self.get_instances(plugin_id=plugin_id, instance_id=instance_id, type=type)
+            sorted_and_filtered = self.get_instances(
+                plugin_id=plugin_id, instance_id=instance_id, type=type
+            )
             return sorted_and_filtered[0]
-        except (IndexError, KeyError) as e:
+        except (IndexError, KeyError) as err:
             if exception_if_missing:
                 raise KeyError(
-                    "No instances matched filter requirements [{}][{}][{}]".format(
-                        plugin_id, instance_id, type)) from e
-            else:
-                logger.debug("No instances matched for filter requirements")
+                    "No instances matched filter requirements "
+                    f"[{plugin_id}][{instance_id}][{type}]"
+                ) from err
 
-    def get_instances(self, plugin_id: str = '', instance_id: str = '',
-                      type: str = '') -> List['PluginInstance']:
-        """ filter and order plugins by their top down priority
+            logger.debug("No instances matched for filter requirements")
+            return None
+
+    # pylint: disable=redefined-builtin
+    def get_instances(
+        self, plugin_id: str = "", instance_id: str = "", type: Type = None
+    ) -> List["PluginInstance"]:
+        """Filter and order plugins by their top down priority.
 
         Parameters:
         -----------
-
         instance_id (str) : plugin Instance intance_id for matching
         plugin_id (str) : plugin Instance plugin_id for matching
         type (Type) : plugin Instance type for matching
@@ -290,35 +340,47 @@ class PluginInstances:
 
         Returns:
         --------
-
         List of filtered and sorted PluginInstance objects
-
         """
         matched_instances = []
         for plugin_instance in self.instances:
             if plugin_id and not plugin_instance.plugin_id == plugin_id:
                 continue
-            elif instance_id and not plugin_instance.instance_id == instance_id:
+            if instance_id and not plugin_instance.instance_id == instance_id:
                 continue
-            elif type and not type == plugin_instance.type:
+            if type and not type == plugin_instance.type:
                 continue
 
             matched_instances.append(plugin_instance)
 
-        if not len(matched_instances):
+        if len(matched_instances) == 0:
             # no need to put more work into it if we have no instances
             return []
 
         # sort from high to low (avoid divide by zero)
-        sorted_instances = sorted(matched_instances, key=lambda instance: 1 /
-                                  instance.priority if instance.priority > 1 else 1)
+        sorted_instances = sorted(
+            matched_instances,
+            key=lambda instance: 1 / instance.priority
+            if instance.priority > 1
+            else 1,
+        )
         return sorted_instances
 
 
+# pylint: disable=too-few-public-methods
 class PluginInstance:
-    """ a struct for a plugin instance that also keeps metadata about the instance """
+    """Struct for a plugin instance that also keeps metadata about the instance."""
 
-    def __init__(self, type: str, plugin_id: str, instance_id: str, priority: int, plugin):
+    # pylint: disable=too-many-arguments, redefined-builtin
+    def __init__(
+        self,
+        type: Type,
+        plugin_id: str,
+        instance_id: str,
+        priority: int,
+        plugin,
+    ):
+        """Initialize the instance."""
         self.type = type
         self.plugin_id = plugin_id
         self.instance_id = instance_id

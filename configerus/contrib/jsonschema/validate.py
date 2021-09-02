@@ -1,25 +1,34 @@
+"""
+
+Configerus validation plugin that uses jsonschema to validate.
+
+"""
 from typing import Any
 from jsonschema import validate
 
 from configerus.config import Config
 
-PLUGIN_ID_VALIDATE_JSONSCHEMA_SCHEMA_CONFIG_LABEL = 'jsonschema'
+PLUGIN_ID_VALIDATE_JSONSCHEMA_SCHEMA_CONFIG_LABEL = "jsonschema"
 
 
-class JsonSchemaValidatorPlugin():
-    """   """
+class JsonSchemaValidatorPlugin:
+    """Configerus validation plugin that uses jsonschema to validate."""
 
     def __init__(self, config: Config, instance_id: str):
-        """  """
+        """Initialize plugin."""
         self.config = config
         self.instance_id = instance_id
 
+    def copy(self):
+        """Make a copy of this plugin."""
+        plugin_copy = JsonSchemaValidatorPlugin(self.config, self.instance_id)
+        return plugin_copy
+
     def validate(self, validate_target: Any, data):
-        """ Validate a structure using jsonschema pulled from a config key
+        """Validate a structure using jsonschema pulled from a config key.
 
         Parameters:
         -----------
-
         validate_target (str|dict[str:dict]) : validation schema indicatior:
 
             One of two options will be validated, otherwise we will ignore:
@@ -37,43 +46,60 @@ class JsonSchemaValidatorPlugin():
 
         Raises:
         -------
-
         If a jsonchema schema was identified in the validate target, then a
         jsonschema validation error will be raised if the data is not valid.
-
         """
-
         if isinstance(validate_target, str):
-            (method, validate_key) = validate_target.split(':')
+            (method, validate_key) = validate_target.split(":")
 
             if not method == PLUGIN_ID_VALIDATE_JSONSCHEMA_SCHEMA_CONFIG_LABEL:
-                # returns of any value signal validation as validate only catches exceptions
+                # returns of any value signal validation as validate only
+                # catches exceptions
                 return
 
             # This case means that we were told to look for a jsonschema source
-            # in config, which we can find by loading jsonschema as a config label
-            # and then treating the passed string as a config key for .get()
+            # in config, which we can find by loading jsonschema as a config
+            # label and then treating the passed string as a config key for
+            # .get()
 
             try:
-                schema_config = self.config.load(PLUGIN_ID_VALIDATE_JSONSCHEMA_SCHEMA_CONFIG_LABEL)
+                schema_config = self.config.load(
+                    PLUGIN_ID_VALIDATE_JSONSCHEMA_SCHEMA_CONFIG_LABEL
+                )
                 schema = schema_config.get(validate_key)
 
-            except Exception as e:
+            except Exception as err:
                 raise NotImplementedError(
-                    "Could not access jsonschema validation schema from config target '{}:{}'".format(
-                        PLUGIN_ID_VALIDATE_JSONSCHEMA_SCHEMA_CONFIG_LABEL, validate_key))
+                    "Could not access jsonschema validation schema from config"
+                    f" target "
+                    f"'{PLUGIN_ID_VALIDATE_JSONSCHEMA_SCHEMA_CONFIG_LABEL}:"
+                    f"{validate_key}'"
+                ) from err
 
         elif isinstance(validate_target, dict):
-            if not PLUGIN_ID_VALIDATE_JSONSCHEMA_SCHEMA_CONFIG_LABEL in validate_target:
+            # in this case, the validate target is itself a Dict JsonSchema
+            # validation definition.
+
+            if (
+                PLUGIN_ID_VALIDATE_JSONSCHEMA_SCHEMA_CONFIG_LABEL
+                not in validate_target
+            ):
                 return
 
-            schema = validate_target[PLUGIN_ID_VALIDATE_JSONSCHEMA_SCHEMA_CONFIG_LABEL]
+            schema = validate_target[
+                PLUGIN_ID_VALIDATE_JSONSCHEMA_SCHEMA_CONFIG_LABEL
+            ]
 
             if not isinstance(schema, dict):
-                raise ValueError("JSONSCHEMA scheme was expected to be a dict: {}".format(schema))
+                raise ValueError(
+                    f"JSONSCHEMA scheme was expected to be a dict: {schema}"
+                )
 
         else:
             # Could not interpret validate target
             return
 
+        # Call the jsonschema validation using the schema.
+        # this will raise an exception on validatio failure
+        # pylint: disable=not-callable
         validate(data, schema=schema)
