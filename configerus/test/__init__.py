@@ -11,26 +11,35 @@ from configerus.contrib.env import PLUGIN_ID_SOURCE_ENV_SPECIFIC
 from configerus.contrib.dict import PLUGIN_ID_SOURCE_DICT
 from configerus.contrib.files import PLUGIN_ID_SOURCE_PATH
 
-logger = logging.getLogger('configerus:tests')
+logger = logging.getLogger("configerus:tests")
 
-TEST_CONFIG_TEMP_DIR = ''
+TEST_CONFIG_TEMP_DIR = ""
 """ on first use, we will populate this with a str path to a parent tmp dir that
     will contain any file config that we use """
 
 
 def make_test_config(config: Config, sources: List):
-    """ Make config of various types from a list, and add it to a config object """
+    """Make config of various types from a list, and add it to a config object"""
     global TEST_CONFIG_TEMP_DIR
 
     logger.info("Building sources from source list")
     for source in sources:
         name = source["name"]
-        priority = source["priority"] if "priority" in source else config.default_priority()
+        priority = (
+            source["priority"]
+            if "priority" in source
+            else config.default_priority()
+        )
         type = source["type"]
         data = source["data"]
 
         if type == PLUGIN_ID_SOURCE_DICT:
-            logger.info("Adding 'dict' source '%s' [%s]: %s", name, priority, data.keys())
+            logger.info(
+                "Adding 'dict' source '%s' [%s]: %s",
+                name,
+                priority,
+                data.keys(),
+            )
             config.add_source(type, name, priority).set_data(data)
 
         elif type == PLUGIN_ID_SOURCE_PATH:
@@ -44,8 +53,13 @@ def make_test_config(config: Config, sources: List):
             os.makedirs(full_path)
             for file_name, file_data in data.items():
                 full_file = os.path.join(full_path, file_name)
-                logger.debug("path source '%s' writing file '%s' : %s", name, full_file, file_data)
-                with open(full_file, 'w') as config_file_pointer:
+                logger.debug(
+                    "path source '%s' writing file '%s' : %s",
+                    name,
+                    full_file,
+                    file_data,
+                )
+                with open(full_file, "w") as config_file_pointer:
                     extension = os.path.splitext(file_name)[1].lower()[1:]
                     if extension == "json":
                         json.dump(file_data, config_file_pointer)
@@ -53,20 +67,33 @@ def make_test_config(config: Config, sources: List):
                         yaml.dump(file_data, config_file_pointer)
 
             # then add the created paths to the config sources
-            logger.info("Adding 'path' source '%s' [%s]: %s : %s", name, priority, path, data.keys())
+            logger.info(
+                "Adding 'path' source '%s' [%s]: %s : %s",
+                name,
+                priority,
+                path,
+                data.keys(),
+            )
             config.add_source(type, name, priority).set_path(full_path)
 
         if type == PLUGIN_ID_SOURCE_ENV_SPECIFIC:
             # we can do env plugins as well
-            logger.info("Adding 'env' source '%s' [%s]: %s", name, priority, data.keys())
+            logger.info(
+                "Adding 'env' source '%s' [%s]: %s",
+                name,
+                priority,
+                data.keys(),
+            )
             for env_key, env_data in data.items():
-                env_name = "{}_{}".format('CONFIGERUSTEST', env_key).upper()
-                logger.info("Adding environment variable : {}".format(env_name))
+                env_name = "{}_{}".format("CONFIGERUSTEST", env_key).upper()
+                logger.info(
+                    "Adding environment variable : {}".format(env_name)
+                )
                 os.environ[env_name] = str(env_data)
-            config.add_source(type, name, priority).set_base('CONFIGERUSTEST')
+            config.add_source(type, name, priority).set_base("CONFIGERUSTEST")
 
 
 def test_config_cleanup(config: Config):
-    """ clean up any created temporary folder created """
+    """clean up any created temporary folder created"""
     if TEST_CONFIG_TEMP_DIR:
         rmtree(TEST_CONFIG_TEMP_DIR)
